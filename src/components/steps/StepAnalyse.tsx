@@ -10,7 +10,7 @@ import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined';
 import ForwardToInboxOutlinedIcon from '@mui/icons-material/ForwardToInboxOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-import type { AntragData, BhvRisikoStufe, HochgeladenesDokument, Regelwerk, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag } from '../../types/antrag';
+import type { AntragData, BhvRisikoStufe, HochgeladenesDokument, Regelwerk, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag, FreigabeErteiltEintrag } from '../../types/antrag';
 import type { AppUser } from '../../types/user';
 import { analysiereBhvFragebogen } from '../../utils/bhvAnalyse';
 import { findeDokumentHinweise } from '../../utils/dokumentHinweise';
@@ -116,6 +116,9 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
   const empfaengerOptionen = users.filter((u) => (u.rolle === 'spezialist' || u.rolle === 'admin') && u.id !== currentUser.id);
   const wartetAufFreigabe = data.status === 'freigabe angefordert';
   const letzteWeiterleitung = [...workflow].reverse().find((e): e is WeiterleitungsEintrag => e.typ === 'weiterleitung');
+  // Freigabe erteilen darf nur, wer laut Status-Workflow dazu berechtigt ist —
+  // nicht der Vorgangs-Eigentümer selbst (sonst könnte man sich die eigene Freigabe erteilen).
+  const kannFreigabeErteilen = currentUser.rolle === 'spezialist' || currentUser.rolle === 'admin';
 
   const handleWeiterleiten = () => {
     const empfaenger = empfaengerOptionen.find((u) => u.id === empfaengerId);
@@ -134,6 +137,17 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
     onChange({ status: 'freigabe angefordert', workflow: [...workflow, eintrag] });
     setEmpfaengerId('');
     setGrund('');
+  };
+
+  const handleFreigabeErteilen = () => {
+    const eintrag: FreigabeErteiltEintrag = {
+      id: `wf-${Date.now()}`,
+      typ: 'freigabe_erteilt',
+      erstelltAm: new Date().toISOString(),
+      erstelltVonId: currentUser.id,
+      erstelltVonName: `${currentUser.vorname} ${currentUser.nachname}`,
+    };
+    onChange({ status: 'in Prüfung', workflow: [...workflow, eintrag] });
   };
 
   const handleRueckmeldungSenden = () => {
@@ -173,14 +187,27 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
           </Typography>
 
           {wartetAufFreigabe && letzteWeiterleitung ? (
-            <Box sx={{ p: 1.5, bgcolor: '#EAF5EE', border: '1px solid #BFDBFE', borderRadius: 1.5, flex: 1 }}>
-              <Typography sx={{ fontSize: '0.76rem', color: '#004A21' }}>
-                Freigabe angefordert bei <strong>{letzteWeiterleitung.empfaengerName}</strong> am {formatDatum(letzteWeiterleitung.erstelltAm)}.
-              </Typography>
-              <Typography sx={{ fontSize: '0.74rem', color: '#004A21', fontStyle: 'italic', mt: 0.5 }}>
-                „{letzteWeiterleitung.grund}"
-              </Typography>
-            </Box>
+            <>
+              <Box sx={{ p: 1.5, bgcolor: '#EAF5EE', border: '1px solid #BFDBFE', borderRadius: 1.5, flex: 1 }}>
+                <Typography sx={{ fontSize: '0.76rem', color: '#004A21' }}>
+                  Freigabe angefordert bei <strong>{letzteWeiterleitung.empfaengerName}</strong> am {formatDatum(letzteWeiterleitung.erstelltAm)}.
+                </Typography>
+                <Typography sx={{ fontSize: '0.74rem', color: '#004A21', fontStyle: 'italic', mt: 0.5 }}>
+                  „{letzteWeiterleitung.grund}"
+                </Typography>
+              </Box>
+              {kannFreigabeErteilen && (
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="small"
+                  sx={{ mt: 1.5 }}
+                  onClick={handleFreigabeErteilen}
+                >
+                  Freigabe erteilen — zurück zur Prüfung
+                </Button>
+              )}
+            </>
           ) : (
             <>
               <Select
@@ -296,11 +323,13 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
               <Box key={eintrag.id} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                 <Box sx={{
                   width: 6, height: 6, borderRadius: '50%', mt: 0.7, flexShrink: 0,
-                  bgcolor: eintrag.typ === 'weiterleitung' ? '#3730A3' : '#B45309',
+                  bgcolor: eintrag.typ === 'weiterleitung' ? '#3730A3' : eintrag.typ === 'freigabe_erteilt' ? '#15803D' : '#B45309',
                 }} />
                 <Typography sx={{ fontSize: '0.76rem', color: '#334155' }}>
                   {eintrag.typ === 'weiterleitung' ? (
                     <>Weitergeleitet an <strong>{eintrag.empfaengerName}</strong> von {eintrag.erstelltVonName} · {formatDatum(eintrag.erstelltAm)}</>
+                  ) : eintrag.typ === 'freigabe_erteilt' ? (
+                    <>Freigabe erteilt von <strong>{eintrag.erstelltVonName}</strong> · {formatDatum(eintrag.erstelltAm)}</>
                   ) : (
                     <>Rückmeldung an Vertrieb gesendet von {eintrag.erstelltVonName} · {formatDatum(eintrag.erstelltAm)}
                       {' '}<Box component="span" sx={{ color: '#94A3B8' }}>— {eintrag.offeneKategorien.length} offene {eintrag.offeneKategorien.length === 1 ? 'Punkt' : 'Punkte'}</Box>

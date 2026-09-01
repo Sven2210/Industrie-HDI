@@ -249,7 +249,15 @@ export interface VertriebsRueckmeldungEintrag {
   anmerkung: string;
 }
 
-export type WorkflowEintrag = WeiterleitungsEintrag | VertriebsRueckmeldungEintrag;
+export interface FreigabeErteiltEintrag {
+  id: string;
+  typ: 'freigabe_erteilt';
+  erstelltAm: string;
+  erstelltVonId: string;
+  erstelltVonName: string;
+}
+
+export type WorkflowEintrag = WeiterleitungsEintrag | VertriebsRueckmeldungEintrag | FreigabeErteiltEintrag;
 
 export interface AntragData {
   id: string;
