@@ -13,7 +13,7 @@ export const STATUS_UEBERGAENGE: Record<VorgangStatus, StatusUebergang[]> = {
     { ziel: 'in Prüfung', label: 'Zur Prüfung einreichen', erlaubtFuer: 'eigentuemer-oder-admin' },
   ],
   'in Prüfung': [
-    { ziel: 'aktiv', label: 'Annehmen / Aktivieren', erlaubtFuer: 'eigentuemer-oder-admin' },
+    { ziel: 'aktiv', label: 'Angebot erstellen', erlaubtFuer: 'eigentuemer-oder-admin' },
     { ziel: 'rückmeldung benötigt', label: 'Rückmeldung anfordern', erlaubtFuer: 'eigentuemer-oder-admin' },
     { ziel: 'abgelehnt', label: 'Ablehnen', erlaubtFuer: 'eigentuemer-oder-admin' },
     { ziel: 'entwurf', label: 'Zur Überarbeitung zurückweisen', erlaubtFuer: 'eigentuemer-oder-admin' },
@@ -30,7 +30,7 @@ export const STATUS_UEBERGAENGE: Record<VorgangStatus, StatusUebergang[]> = {
     { ziel: 'entwurf', label: 'Wiedereröffnen', erlaubtFuer: 'eigentuemer-oder-admin' },
   ],
   aktiv: [
-    { ziel: 'in Prüfung', label: 'Aktivierung zurücknehmen', erlaubtFuer: 'eigentuemer-oder-admin' },
+    { ziel: 'in Prüfung', label: 'Angebot zurückziehen', erlaubtFuer: 'eigentuemer-oder-admin' },
   ],
 };
 

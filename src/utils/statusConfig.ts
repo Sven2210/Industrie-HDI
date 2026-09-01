@@ -7,7 +7,7 @@ export const STATUS_CONFIG: Record<VorgangStatus, {
   text: string;
   border: string;
 }> = {
-  aktiv: { label: 'Aktiv', color: 'success', bg: '#F0FDF4', text: '#15803D', border: '#BBF7D0' },
+  aktiv: { label: 'Angeboten', color: 'success', bg: '#F0FDF4', text: '#15803D', border: '#BBF7D0' },
   'rückmeldung benötigt': { label: 'Rückmeldung benötigt', color: 'info', bg: '#FFF7ED', text: '#C2410C', border: '#FED7AA' },
   'freigabe angefordert': { label: 'Freigabe angefordert', color: 'info', bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
   'in Prüfung': { label: 'In Prüfung', color: 'warning', bg: '#FFFBEB', text: '#B45309', border: '#FDE68A' },
