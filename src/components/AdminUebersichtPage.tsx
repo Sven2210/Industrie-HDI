@@ -30,7 +30,7 @@ const AdminUebersichtPage: React.FC<Props> = ({
   vorgaenge, currentUser, users, onBack, onEditVorgang, onSwitchUser, onLogout,
 }) => {
   const nachStatus = useMemo(() => {
-    const counts: Record<VorgangStatus, number> = { aktiv: 0, 'rückmeldung benötigt': 0, 'freigabe angefordert': 0, 'in Prüfung': 0, abgelehnt: 0, entwurf: 0 };
+    const counts: Record<VorgangStatus, number> = { aktiv: 0, 'rückmeldung benötigt': 0, 'freigabe angefordert': 0, 'freigabe abgelehnt': 0, 'in Prüfung': 0, abgelehnt: 0, entwurf: 0 };
     vorgaenge.forEach((v) => { counts[v.status] = (counts[v.status] ?? 0) + 1; });
     return counts;
   }, [vorgaenge]);

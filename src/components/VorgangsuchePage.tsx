@@ -168,6 +168,8 @@ const VorgangsuchePage: React.FC<Props> = ({
                 <MenuItem value="entwurf">Entwurf</MenuItem>
                 <MenuItem value="in Prüfung">In Prüfung</MenuItem>
                 <MenuItem value="rückmeldung benötigt">Rückmeldung benötigt</MenuItem>
+                <MenuItem value="freigabe angefordert">Freigabe angefordert</MenuItem>
+                <MenuItem value="freigabe abgelehnt">Freigabe abgelehnt</MenuItem>
                 <MenuItem value="aktiv">Angeboten</MenuItem>
                 <MenuItem value="abgelehnt">Abgelehnt</MenuItem>
               </TextField>

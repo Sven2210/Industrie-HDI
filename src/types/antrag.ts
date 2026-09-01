@@ -124,7 +124,7 @@ export interface AnalyseDaten {
 
 export type Sparte = 'Haftpflicht' | 'Transport' | 'Technische Versicherung';
 export type Zeichnungsart = 'Alleinzeichnung' | 'Beteiligungsgeschäft';
-export type VorgangStatus = 'entwurf' | 'in Prüfung' | 'rückmeldung benötigt' | 'freigabe angefordert' | 'aktiv' | 'abgelehnt';
+export type VorgangStatus = 'entwurf' | 'in Prüfung' | 'rückmeldung benötigt' | 'freigabe angefordert' | 'freigabe abgelehnt' | 'aktiv' | 'abgelehnt';
 export type Risikobelegenheit = 'DE_ex_USCAN' | 'FOS' | 'LoPo' | 'USCAN' | 'Sonstige';
 export type RisikoRelevanz = 'niedrig' | 'hoch' | 'nein' | 'ja' | 'nicht vereinbart' | '';
 
@@ -257,7 +257,16 @@ export interface FreigabeErteiltEintrag {
   erstelltVonName: string;
 }
 
-export type WorkflowEintrag = WeiterleitungsEintrag | VertriebsRueckmeldungEintrag | FreigabeErteiltEintrag;
+export interface FreigabeAbgelehntEintrag {
+  id: string;
+  typ: 'freigabe_abgelehnt';
+  erstelltAm: string;
+  erstelltVonId: string;
+  erstelltVonName: string;
+  grund: string;
+}
+
+export type WorkflowEintrag = WeiterleitungsEintrag | VertriebsRueckmeldungEintrag | FreigabeErteiltEintrag | FreigabeAbgelehntEintrag;
 
 export interface AntragData {
   id: string;

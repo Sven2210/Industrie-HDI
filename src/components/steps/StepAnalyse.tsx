@@ -10,7 +10,7 @@ import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined';
 import ForwardToInboxOutlinedIcon from '@mui/icons-material/ForwardToInboxOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-import type { AntragData, BhvRisikoStufe, HochgeladenesDokument, Regelwerk, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag, FreigabeErteiltEintrag } from '../../types/antrag';
+import type { AntragData, BhvRisikoStufe, HochgeladenesDokument, Regelwerk, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag, FreigabeErteiltEintrag, FreigabeAbgelehntEintrag } from '../../types/antrag';
 import type { AppUser } from '../../types/user';
 import { analysiereBhvFragebogen } from '../../utils/bhvAnalyse';
 import { findeDokumentHinweise } from '../../utils/dokumentHinweise';
@@ -105,6 +105,7 @@ interface WorkflowProps {
 const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser, users }) => {
   const [empfaengerId, setEmpfaengerId] = useState('');
   const [grund, setGrund] = useState('');
+  const [ablehnungsGrund, setAblehnungsGrund] = useState('');
   const [anmerkung, setAnmerkung] = useState('');
 
   const workflow = data.workflow ?? [];
@@ -115,9 +116,11 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
 
   const empfaengerOptionen = users.filter((u) => (u.rolle === 'spezialist' || u.rolle === 'admin') && u.id !== currentUser.id);
   const wartetAufFreigabe = data.status === 'freigabe angefordert';
+  const freigabeAbgelehnt = data.status === 'freigabe abgelehnt';
   const letzteWeiterleitung = [...workflow].reverse().find((e): e is WeiterleitungsEintrag => e.typ === 'weiterleitung');
-  // Freigabe erteilen darf nur, wer laut Status-Workflow dazu berechtigt ist —
-  // nicht der Vorgangs-Eigentümer selbst (sonst könnte man sich die eigene Freigabe erteilen).
+  const letzteAblehnung = [...workflow].reverse().find((e): e is FreigabeAbgelehntEintrag => e.typ === 'freigabe_abgelehnt');
+  // Über eine Freigabe entscheiden darf nur, wer laut Status-Workflow dazu berechtigt ist —
+  // nicht der Vorgangs-Eigentümer selbst (sonst könnte man sich die eigene Freigabe erteilen/ablehnen).
   const kannFreigabeErteilen = currentUser.rolle === 'spezialist' || currentUser.rolle === 'admin';
 
   const handleWeiterleiten = () => {
@@ -148,6 +151,20 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
       erstelltVonName: `${currentUser.vorname} ${currentUser.nachname}`,
     };
     onChange({ status: 'in Prüfung', workflow: [...workflow, eintrag] });
+  };
+
+  const handleFreigabeAblehnen = () => {
+    if (!ablehnungsGrund.trim()) return;
+    const eintrag: FreigabeAbgelehntEintrag = {
+      id: `wf-${Date.now()}`,
+      typ: 'freigabe_abgelehnt',
+      erstelltAm: new Date().toISOString(),
+      erstelltVonId: currentUser.id,
+      erstelltVonName: `${currentUser.vorname} ${currentUser.nachname}`,
+      grund: ablehnungsGrund.trim(),
+    };
+    onChange({ status: 'freigabe abgelehnt', workflow: [...workflow, eintrag] });
+    setAblehnungsGrund('');
   };
 
   const handleRueckmeldungSenden = () => {
@@ -197,19 +214,52 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
                 </Typography>
               </Box>
               {kannFreigabeErteilen && (
-                <Button
-                  variant="contained"
-                  fullWidth
-                  size="small"
-                  sx={{ mt: 1.5 }}
-                  onClick={handleFreigabeErteilen}
-                >
-                  Freigabe erteilen — zurück zur Prüfung
-                </Button>
+                <>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    placeholder="Ablehnungsgrund (Pflichtfeld bei Ablehnung)"
+                    value={ablehnungsGrund}
+                    onChange={(e) => setAblehnungsGrund(e.target.value)}
+                    sx={{ bgcolor: '#fff', mt: 1.5 }}
+                  />
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      size="small"
+                      onClick={handleFreigabeErteilen}
+                    >
+                      Freigabe erteilen
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      fullWidth
+                      size="small"
+                      disabled={!ablehnungsGrund.trim()}
+                      onClick={handleFreigabeAblehnen}
+                    >
+                      Ablehnen
+                    </Button>
+                  </Box>
+                </>
               )}
             </>
           ) : (
             <>
+              {freigabeAbgelehnt && letzteAblehnung && (
+                <Box sx={{ p: 1.5, bgcolor: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 1.5, mb: 1.5 }}>
+                  <Typography sx={{ fontSize: '0.76rem', color: '#BE123C' }}>
+                    Freigabe abgelehnt von <strong>{letzteAblehnung.erstelltVonName}</strong> am {formatDatum(letzteAblehnung.erstelltAm)}.
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.74rem', color: '#BE123C', fontStyle: 'italic', mt: 0.5 }}>
+                    „{letzteAblehnung.grund}"
+                  </Typography>
+                </Box>
+              )}
               <Select
                 size="small"
                 displayEmpty
@@ -323,13 +373,20 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
               <Box key={eintrag.id} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                 <Box sx={{
                   width: 6, height: 6, borderRadius: '50%', mt: 0.7, flexShrink: 0,
-                  bgcolor: eintrag.typ === 'weiterleitung' ? '#3730A3' : eintrag.typ === 'freigabe_erteilt' ? '#15803D' : '#B45309',
+                  bgcolor: eintrag.typ === 'weiterleitung' ? '#3730A3'
+                    : eintrag.typ === 'freigabe_erteilt' ? '#15803D'
+                    : eintrag.typ === 'freigabe_abgelehnt' ? '#BE123C'
+                    : '#B45309',
                 }} />
                 <Typography sx={{ fontSize: '0.76rem', color: '#334155' }}>
                   {eintrag.typ === 'weiterleitung' ? (
                     <>Weitergeleitet an <strong>{eintrag.empfaengerName}</strong> von {eintrag.erstelltVonName} · {formatDatum(eintrag.erstelltAm)}</>
                   ) : eintrag.typ === 'freigabe_erteilt' ? (
                     <>Freigabe erteilt von <strong>{eintrag.erstelltVonName}</strong> · {formatDatum(eintrag.erstelltAm)}</>
+                  ) : eintrag.typ === 'freigabe_abgelehnt' ? (
+                    <>Freigabe abgelehnt von <strong>{eintrag.erstelltVonName}</strong> · {formatDatum(eintrag.erstelltAm)}
+                      {' '}<Box component="span" sx={{ color: '#94A3B8' }}>— „{eintrag.grund}"</Box>
+                    </>
                   ) : (
                     <>Rückmeldung an Vertrieb gesendet von {eintrag.erstelltVonName} · {formatDatum(eintrag.erstelltAm)}
                       {' '}<Box component="span" sx={{ color: '#94A3B8' }}>— {eintrag.offeneKategorien.length} offene {eintrag.offeneKategorien.length === 1 ? 'Punkt' : 'Punkte'}</Box>

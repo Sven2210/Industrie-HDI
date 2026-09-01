@@ -24,7 +24,11 @@ export const STATUS_UEBERGAENGE: Record<VorgangStatus, StatusUebergang[]> = {
   ],
   'freigabe angefordert': [
     { ziel: 'in Prüfung', label: 'Freigabe erteilt — zurück zur Prüfung', erlaubtFuer: ['spezialist', 'admin'] },
+    { ziel: 'freigabe abgelehnt', label: 'Freigabe ablehnen', erlaubtFuer: ['spezialist', 'admin'] },
     { ziel: 'entwurf', label: 'Zur Überarbeitung zurückziehen', erlaubtFuer: 'eigentuemer-oder-admin' },
+  ],
+  'freigabe abgelehnt': [
+    { ziel: 'entwurf', label: 'Zur Überarbeitung zurückweisen', erlaubtFuer: 'eigentuemer-oder-admin' },
   ],
   abgelehnt: [
     { ziel: 'entwurf', label: 'Wiedereröffnen', erlaubtFuer: 'eigentuemer-oder-admin' },
