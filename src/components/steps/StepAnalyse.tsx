@@ -10,7 +10,7 @@ import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined';
 import ForwardToInboxOutlinedIcon from '@mui/icons-material/ForwardToInboxOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-import type { AntragData, BhvRisikoStufe, HochgeladenesDokument, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag } from '../../types/antrag';
+import type { AntragData, BhvRisikoStufe, HochgeladenesDokument, Regelwerk, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag } from '../../types/antrag';
 import type { AppUser } from '../../types/user';
 import { analysiereBhvFragebogen } from '../../utils/bhvAnalyse';
 import { findeDokumentHinweise } from '../../utils/dokumentHinweise';
@@ -36,6 +36,10 @@ function StandortKarte({ lat, lon }: { lat: number; lon: number }) {
     </Box>
   );
 }
+
+const REGELWERK_LABELS: Record<Regelwerk, string> = {
+  betriebshaftpflicht: 'Betriebshaftpflicht',
+};
 
 const NATURGEFAHR_LABELS: Record<string, string> = {
   hochwasser: 'Hochwasser / Überschwemmung',
@@ -332,6 +336,11 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) =>
   const dokumente = analyse.dokumente;
   const bhvErgebnis = analyse.bhvErgebnis;
   const hinweise = analyse.hinweise ?? [];
+  const regelwerk: Regelwerk = analyse.regelwerk ?? 'betriebshaftpflicht';
+
+  const handleRegelwerkAendern = (wert: Regelwerk) => {
+    onChange({ analyse: { ...analyse, regelwerk: wert } });
+  };
 
   const sanktionsAnalyse = data.sanktionsAnalyse;
   const risikoAnalyse = data.risikoAnalyse;
@@ -458,6 +467,24 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) =>
         Laden Sie den ausgefüllten Kurzfragebogen zum Betriebs- und Produkthaftpflichtrisiko hoch.
         Nach der Analyse wird zu jeder Kategorie eine Risikoeinschätzung angezeigt.
       </Typography>
+
+      {/* Regelwerk */}
+      <Box sx={{ p: 3, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2.5, mb: 2.5 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#0F172A', mb: 1.5 }}>
+          Regelwerk
+        </Typography>
+        <Select
+          size="small"
+          fullWidth
+          value={regelwerk}
+          onChange={(e) => handleRegelwerkAendern(e.target.value as Regelwerk)}
+          sx={{ maxWidth: 360, fontSize: '0.85rem' }}
+        >
+          {(Object.keys(REGELWERK_LABELS) as Regelwerk[]).map((r) => (
+            <MenuItem key={r} value={r}>{REGELWERK_LABELS[r]}</MenuItem>
+          ))}
+        </Select>
+      </Box>
 
       {/* Dokumente */}
       <Box sx={{ p: 3, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2.5, mb: 2.5 }}>

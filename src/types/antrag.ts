@@ -86,6 +86,8 @@ export interface HochgeladenesDokument {
   hochgeladenAm: string;
 }
 
+export type Regelwerk = 'betriebshaftpflicht';
+
 export type BhvRisikoStufe = 'niedrig' | 'mittel' | 'hoch' | 'unbeantwortet';
 
 export interface BhvKategorieErgebnis {
@@ -114,6 +116,7 @@ export interface DokumentHinweis {
 }
 
 export interface AnalyseDaten {
+  regelwerk?: Regelwerk;
   dokumente: HochgeladenesDokument[];
   hinweise?: DokumentHinweis[];
   bhvErgebnis?: BhvAnalyseErgebnis;
