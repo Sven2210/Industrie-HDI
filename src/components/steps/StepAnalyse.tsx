@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Typography, Button, IconButton, Tooltip, Chip, CircularProgress, Select, MenuItem, TextField } from '@mui/material';
+import { Box, Typography, Button, IconButton, Tooltip, Chip, CircularProgress, Select, MenuItem, TextField, Divider } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
@@ -468,7 +468,7 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) =>
         Nach der Analyse wird zu jeder Kategorie eine Risikoeinschätzung angezeigt.
       </Typography>
 
-      {/* Regelwerk */}
+      {/* Regelwerk & Dokumente */}
       <Box sx={{ p: 3, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2.5, mb: 2.5 }}>
         <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#0F172A', mb: 1.5 }}>
           Regelwerk
@@ -484,10 +484,9 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) =>
             <MenuItem key={r} value={r}>{REGELWERK_LABELS[r]}</MenuItem>
           ))}
         </Select>
-      </Box>
 
-      {/* Dokumente */}
-      <Box sx={{ p: 3, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2.5, mb: 2.5 }}>
+        <Divider sx={{ my: 3 }} />
+
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
           <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#0F172A' }}>
             Dokumente
