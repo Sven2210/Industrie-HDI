@@ -348,3 +348,47 @@ export async function analysiereBhvFragebogen(dokument: HochgeladenesDokument): 
     dokumentName: dokument.dateiname,
   };
 }
+
+export interface BhvGesamteinschaetzung {
+  stufe: BhvRisikoStufe;
+  empfehlung: string;
+}
+
+// Gesamtstufe nach dem Prinzip "die ungünstigste Kategorie zählt" — im Underwriting
+// üblich, da bereits ein einzelnes hohes Risiko den gesamten Vertrag prägen kann.
+// Unbeantwortete Kategorien fließen nicht in die Bildung ein (weder positiv noch negativ);
+// ist keine Kategorie beantwortet, ist keine Gesamteinschätzung möglich.
+export function berechneGesamteinschaetzung(
+  kategorien: Pick<BhvKategorieErgebnis, 'titel' | 'stufe'>[]
+): BhvGesamteinschaetzung {
+  const beantwortet = kategorien.filter((k) => k.stufe !== 'unbeantwortet');
+
+  if (beantwortet.length === 0) {
+    return {
+      stufe: 'unbeantwortet',
+      empfehlung: 'Der Fragebogen enthält keine auswertbaren Angaben. Eine Gesamteinschätzung ist erst möglich, sobald mindestens eine Kategorie beantwortet ist.',
+    };
+  }
+
+  const hoch = beantwortet.filter((k) => k.stufe === 'hoch');
+  const mittel = beantwortet.filter((k) => k.stufe === 'mittel');
+
+  if (hoch.length > 0) {
+    return {
+      stufe: 'hoch',
+      empfehlung: `Das Gesamtrisiko wird als hoch eingestuft. Kritisch bewertet sind: ${hoch.map((k) => k.titel).join(', ')}. Empfehlung: Vor Zeichnung eine vertiefte Einzelfallprüfung dieser Kategorien durchführen, Deckungssummen und Selbstbehalte konservativ ansetzen und ggf. Sonderbedingungen oder eine Rückversicherung prüfen.`,
+    };
+  }
+
+  if (mittel.length > 0) {
+    return {
+      stufe: 'mittel',
+      empfehlung: `Das Gesamtrisiko wird als mittel eingestuft. Erhöht bewertet sind: ${mittel.map((k) => k.titel).join(', ')}. Empfehlung: Diese Kategorien im Underwriting-Gespräch gezielt nachfragen und Deckungssummen/Selbstbehalte bei Bedarf anpassen.`,
+    };
+  }
+
+  return {
+    stufe: 'niedrig',
+    empfehlung: 'Das Gesamtrisiko wird als niedrig eingestuft. Empfehlung: Zeichnung zu Standardkonditionen möglich, sofern keine weiteren Auffälligkeiten aus Sanktions- oder Standortprüfung (Kategorie 1) vorliegen.',
+  };
+}

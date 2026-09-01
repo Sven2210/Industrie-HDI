@@ -13,7 +13,7 @@ import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { AntragData, BhvRisikoStufe, BhvKategorieErgebnis, ManuelleRisikoUeberschreibung, HochgeladenesDokument, Regelwerk, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag, FreigabeErteiltEintrag, FreigabeAbgelehntEintrag } from '../../types/antrag';
 import type { AppUser } from '../../types/user';
-import { analysiereBhvFragebogen } from '../../utils/bhvAnalyse';
+import { analysiereBhvFragebogen, berechneGesamteinschaetzung } from '../../utils/bhvAnalyse';
 import { findeDokumentHinweise } from '../../utils/dokumentHinweise';
 import { pruefeSanktionen } from '../../utils/sanktionsAnalyse';
 import { analysiereRisiko } from '../../utils/risikoAnalyse';
@@ -527,6 +527,13 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) =>
   const hinweise = analyse.hinweise ?? [];
   const regelwerk: Regelwerk = analyse.regelwerk ?? 'betriebshaftpflicht';
   const manuelleUeberschreibungen = analyse.manuelleUeberschreibungen ?? [];
+  // Für die Gesamteinschätzung zählt die aktuell gültige Stufe je Kategorie —
+  // also die manuelle Korrektur, falls vorhanden, sonst die automatische.
+  const effektiveKategorien = (bhvErgebnis?.kategorien ?? []).map((k) => {
+    const ueberschreibung = manuelleUeberschreibungen.find((u) => u.kategorieId === k.id);
+    return ueberschreibung ? { ...k, stufe: ueberschreibung.stufe } : k;
+  });
+  const gesamteinschaetzung = bhvErgebnis ? berechneGesamteinschaetzung(effektiveKategorien) : null;
 
   const handleRegelwerkAendern = (wert: Regelwerk) => {
     onChange({ analyse: { ...analyse, regelwerk: wert } });
@@ -838,6 +845,28 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) =>
               onUeberschreiben={(stufe, kommentar) => handleKategorieUeberschreiben(k.id, stufe, kommentar)}
             />
           ))}
+
+          {gesamteinschaetzung && (
+            <Box sx={{
+              mt: 3, p: 2.5, bgcolor: STUFE_CONFIG[gesamteinschaetzung.stufe].bg,
+              border: `1.5px solid ${STUFE_CONFIG[gesamteinschaetzung.stufe].border}`, borderRadius: 2.5,
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: STUFE_CONFIG[gesamteinschaetzung.stufe].color, flexShrink: 0 }} />
+                <Box>
+                  <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Gesamteinschätzung (Kategorien 2–12)
+                  </Typography>
+                  <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: STUFE_CONFIG[gesamteinschaetzung.stufe].color }}>
+                    {STUFE_CONFIG[gesamteinschaetzung.stufe].label}
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography sx={{ fontSize: '0.82rem', color: '#1E293B', lineHeight: 1.6 }}>
+                {gesamteinschaetzung.empfehlung}
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
 
