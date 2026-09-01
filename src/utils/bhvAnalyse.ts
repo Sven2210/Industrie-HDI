@@ -270,7 +270,13 @@ const ABSCHNITTE: AbschnittConfig[] = [
       'gesellschaft', 'wer hat gekündigt?', 'vereinbarte deckungssummen', 'ablauf des vertrages',
     ],
     bewerten: (abschnitt, staticLabels) => {
-      const versichererGekuendigt = /\bversicherer\b/i.test(abschnitt) && !/versicherungsnehmer/i.test(abschnitt.match(/\bversicherer\b[^.]*/i)?.[0] ?? '');
+      // Ganzen Satz um "Versicherer" betrachten (nicht nur vorwärts ab der Fundstelle) — sonst
+      // wird z.B. "Gekündigt durch den Versicherungsnehmer, nicht durch den Versicherer."
+      // fälschlich als Kündigung durch den Versicherer gewertet.
+      const saetze = abschnitt.split(/(?<=[.!?])\s+/);
+      const versichererGekuendigt = saetze.some(
+        (satz) => /\bversicherer\b/i.test(satz) && !/versicherungsnehmer/i.test(satz)
+      );
       if (versichererGekuendigt) {
         return {
           stufe: 'hoch',
@@ -293,8 +299,8 @@ const ABSCHNITTE: AbschnittConfig[] = [
       'für bearbeitungsschäden', 'im rahmen der', 'sachschaden', 'deckungssumme/', 'für feuerschäden an',
       'gemieteten gebäuden', 'sb:', 'euro',
     ],
-    bewerten: (abschnitt) => {
-      const betraege = extrahiereBetraege(abschnitt);
+    bewerten: (abschnitt, staticLabels) => {
+      const betraege = extrahiereBetraege(extraInhalt(abschnitt, staticLabels));
       if (betraege.length === 0) {
         return { stufe: 'unbeantwortet', begruendung: 'Keine gewünschten Deckungssummen im Dokument gefunden.' };
       }

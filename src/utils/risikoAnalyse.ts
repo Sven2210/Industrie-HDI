@@ -4,7 +4,12 @@ const TIMEOUT_MS = 8000;
 
 function fetchMitTimeout(url: string, init?: RequestInit): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  // Mit Grund abbrechen, damit fetch() mit einer sprechenden Fehlermeldung statt dem
+  // kryptischen Standardtext "signal is aborted without reason" ablehnt.
+  const timer = setTimeout(
+    () => controller.abort(new Error(`Zeitüberschreitung nach ${TIMEOUT_MS / 1000}s`)),
+    TIMEOUT_MS
+  );
   return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
@@ -32,7 +37,12 @@ function ampelVonScore(score: number): RisikoAmpel {
 }
 
 function gesamtAmpel(bewertungen: NaturgefahrBewertung[]): RisikoAmpel {
-  const scores = bewertungen.map((b) => b.score);
+  // Fehlgeschlagene Teilanalysen (ampel: 'unbekannt', score 0) dürfen den Durchschnitt nicht
+  // künstlich nach unten ziehen — sonst kann ein echtes Extremrisiko durch eine ausgefallene
+  // API-Abfrage auf "gelb" statt "rot" heruntergerechnet werden.
+  const bekannte = bewertungen.filter((b) => b.ampel !== 'unbekannt');
+  if (bekannte.length === 0) return 'unbekannt';
+  const scores = bekannte.map((b) => b.score);
   const max = Math.max(...scores);
   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
   return ampelVonScore(max * 0.6 + avg * 0.4);
@@ -132,44 +142,63 @@ async function overpassCount(query: string): Promise<number> {
   if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
   const data = await res.json();
   const countEl = (data.elements ?? []).find((e: { type: string }) => e.type === 'count');
-  return parseInt(countEl?.tags?.total ?? '0', 10);
+  const total = parseInt(countEl?.tags?.total ?? '0', 10);
+  if (Number.isNaN(total)) throw new Error('Unerwartetes Antwortformat von Overpass');
+  return total;
+}
+
+// null = Abfrage fehlgeschlagen (Timeout, Netzwerkfehler, unerwartetes Format). Ein Timeout
+// bei vielen Treffern (z.B. viele Gewässer/Wälder) bedeutet tendenziell HÖHERES Risiko — daher
+// wird bei einem Fehler nicht stillschweigend 0 angenommen (das würde das Risiko unterschätzen),
+// sondern die betroffene Kategorie als "unbekannt" ausgewiesen.
+function summeOderUnbekannt(werte: (number | null)[]): number | null {
+  if (werte.some((w) => w === null)) return null;
+  return werte.reduce((a: number, b) => a + (b as number), 0);
 }
 
 async function analysiereOSM(lat: number, lon: number): Promise<{ hochwasser: NaturgefahrBewertung; waldbrand: NaturgefahrBewertung }> {
   const [river, stream, canal, forest, wood, scrub] = await Promise.all([
-    overpassCount(`[out:json][timeout:7];way["waterway"="river"](around:2000,${lat},${lon});out count;`).catch(() => 0),
-    overpassCount(`[out:json][timeout:7];way["waterway"="stream"](around:2000,${lat},${lon});out count;`).catch(() => 0),
-    overpassCount(`[out:json][timeout:7];way["waterway"="canal"](around:2000,${lat},${lon});out count;`).catch(() => 0),
-    overpassCount(`[out:json][timeout:7];way["landuse"="forest"](around:3000,${lat},${lon});out count;`).catch(() => 0),
-    overpassCount(`[out:json][timeout:7];way["landuse"="wood"](around:3000,${lat},${lon});out count;`).catch(() => 0),
-    overpassCount(`[out:json][timeout:7];way["natural"="wood"](around:3000,${lat},${lon});out count;`).catch(() => 0),
+    overpassCount(`[out:json][timeout:7];way["waterway"="river"](around:2000,${lat},${lon});out count;`).catch(() => null),
+    overpassCount(`[out:json][timeout:7];way["waterway"="stream"](around:2000,${lat},${lon});out count;`).catch(() => null),
+    overpassCount(`[out:json][timeout:7];way["waterway"="canal"](around:2000,${lat},${lon});out count;`).catch(() => null),
+    overpassCount(`[out:json][timeout:7];way["landuse"="forest"](around:3000,${lat},${lon});out count;`).catch(() => null),
+    overpassCount(`[out:json][timeout:7];way["landuse"="wood"](around:3000,${lat},${lon});out count;`).catch(() => null),
+    overpassCount(`[out:json][timeout:7];way["natural"="wood"](around:3000,${lat},${lon});out count;`).catch(() => null),
   ]);
 
-  const gewaesser = river + stream + canal;
-  const wald = forest + wood + scrub;
+  const gewaesser = summeOderUnbekannt([river, stream, canal]);
+  const wald = summeOderUnbekannt([forest, wood, scrub]);
 
   let hwScore = 1;
-  if (gewaesser > 10) hwScore = 5;
-  else if (gewaesser > 6) hwScore = 4;
-  else if (gewaesser > 3) hwScore = 3;
-  else if (gewaesser > 0) hwScore = 2;
+  if (gewaesser !== null) {
+    if (gewaesser > 10) hwScore = 5;
+    else if (gewaesser > 6) hwScore = 4;
+    else if (gewaesser > 3) hwScore = 3;
+    else if (gewaesser > 0) hwScore = 2;
+  }
 
   let wbScore = 1;
-  if (wald > 15) wbScore = 4;
-  else if (wald > 8) wbScore = 3;
-  else if (wald > 2) wbScore = 2;
+  if (wald !== null) {
+    if (wald > 15) wbScore = 4;
+    else if (wald > 8) wbScore = 3;
+    else if (wald > 2) wbScore = 2;
+  }
 
   return {
-    hochwasser: {
-      ampel: ampelVonScore(hwScore),
-      score: hwScore,
-      details: { 'Gewässer im Umkreis 2km': `${gewaesser}`, 'Hinweis': 'Basiert auf OSM-Daten (kein ZÜRS)' },
-    },
-    waldbrand: {
-      ampel: ampelVonScore(wbScore),
-      score: wbScore,
-      details: { 'Waldflächen im Umkreis 3km': `${wald}`, 'Hinweis': 'Basiert auf OSM-Landnutzungsdaten' },
-    },
+    hochwasser: gewaesser === null
+      ? { ampel: 'unbekannt', score: 0, details: { Fehler: 'Gewässerabfrage (OSM/Overpass) nicht verfügbar' } }
+      : {
+          ampel: ampelVonScore(hwScore),
+          score: hwScore,
+          details: { 'Gewässer im Umkreis 2km': `${gewaesser}`, 'Hinweis': 'Basiert auf OSM-Daten (kein ZÜRS)' },
+        },
+    waldbrand: wald === null
+      ? { ampel: 'unbekannt', score: 0, details: { Fehler: 'Waldflächenabfrage (OSM/Overpass) nicht verfügbar' } }
+      : {
+          ampel: ampelVonScore(wbScore),
+          score: wbScore,
+          details: { 'Waldflächen im Umkreis 3km': `${wald}`, 'Hinweis': 'Basiert auf OSM-Landnutzungsdaten' },
+        },
   };
 }
 
@@ -194,7 +223,26 @@ function analysiereHagel(lat: number, lon: number): NaturgefahrBewertung {
 // ── Hauptfunktion ──────────────────────────────────────────────────────────────
 
 export async function analysiereRisiko(adresse: Wagnisanschrift): Promise<RisikoAnalyse> {
-  const { lat, lon } = await geocode(adresse);
+  let lat: number, lon: number;
+  try {
+    ({ lat, lon } = await geocode(adresse));
+  } catch (e) {
+    // Anders als bei den Naturgefahren-Teilanalysen gibt es ohne Koordinaten keine
+    // Grundlage für IRGENDEINE Bewertung — die gesamte Analyse degradiert daher komplett
+    // zu "unbekannt", statt die App mit einer unbehandelten Exception abbrechen zu lassen.
+    const unbekannt: NaturgefahrBewertung = {
+      ampel: 'unbekannt',
+      score: 0,
+      details: { Fehler: (e as Error)?.message ?? 'Adresse konnte nicht geokodiert werden' },
+    };
+    return {
+      lat: 0, lon: 0,
+      gesamtAmpel: 'unbekannt',
+      hochwasser: unbekannt, sturm: unbekannt, erdbeben: unbekannt,
+      hagel: unbekannt, waldbrand: unbekannt, schnee: unbekannt,
+      analysiertAm: new Date().toISOString(),
+    };
+  }
 
   // Nur noch 3 parallele Requests statt 4
   const [erdbeben, klima, osm] = await Promise.all([

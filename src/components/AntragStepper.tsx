@@ -107,6 +107,19 @@ const AntragStepper: React.FC<Props> = ({
     setData((d) => ({ ...d, ...patch, updatedAt: new Date().toISOString() }));
   };
 
+  // Für Workflow-/Freigabe-Entscheidungen: sofort persistieren (wie beim Status-Menü in der
+  // Sidebar), damit eine Freigabe/Ablehnung nicht verloren geht, wenn der Vorgang danach ohne
+  // expliziten "Speichern"-Klick verlassen wird.
+  const updateUndSpeichern = (patch: Partial<AntragData>) => {
+    if (readOnly) return;
+    setData((d) => {
+      const saved = { ...d, ...patch, updatedAt: new Date().toISOString() };
+      onSave(saved);
+      return saved;
+    });
+    setSaveSnack(true);
+  };
+
   const goTo = (idx: number) => { setStep(idx); };
 
   const handleNext = () => { setStep((s) => Math.min(s + 1, STEPS.length - 1)); };
@@ -135,7 +148,7 @@ const AntragStepper: React.FC<Props> = ({
     switch (step) {
       case 0: return <Step1_Interessent data={data} onChange={update} />;
       case 1: return <Step2_Anbahnungsdaten data={data} onChange={update} />;
-      case 2: return <StepAnalyse data={data} onChange={update} currentUser={currentUser} users={users} />;
+      case 2: return <StepAnalyse data={data} onChange={update} onWorkflowChange={updateUndSpeichern} currentUser={currentUser} users={users} />;
       case 3: return <Step3_Risikocheck data={data} onChange={update} />;
       case 4: return <Step4_Risikokalkulation data={data} onChange={update} />;
       case 5: return <Step5_Beitragskalkulation data={data} onChange={update} />;

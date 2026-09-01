@@ -45,9 +45,19 @@ app.use('/proxy/bundesanzeiger', fetchProxy('https://www.bundesanzeiger.de', {
 
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// SPA-Fallback: alle übrigen GET-Anfragen liefern index.html
-app.use((req, res) => {
+// SPA-Fallback: nur GET-Anfragen auf Pfaden ohne Dateiendung (also Routen, nicht fehlende
+// Assets) liefern index.html. So bleibt Raum für künftige API-Routen (falsche Methode/Pfad
+// landet nicht versehentlich als 200-HTML-Antwort) und ein fehlendes statisches Asset gibt
+// weiterhin einen echten 404 statt einer HTML-Seite zurück.
+app.use((req, res, next) => {
+  if (req.method !== 'GET' || path.extname(req.path)) {
+    return next();
+  }
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+app.use((req, res) => {
+  res.status(404).end('Not found');
 });
 
 app.listen(PORT, () => {

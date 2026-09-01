@@ -4,7 +4,12 @@ const TIMEOUT_MS = 15000;
 
 function fetchMitTimeout(url: string, init?: RequestInit): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  // Mit Grund abbrechen, damit fetch() mit einer sprechenden Fehlermeldung statt dem
+  // kryptischen Standardtext "signal is aborted without reason" ablehnt.
+  const timer = setTimeout(
+    () => controller.abort(new Error(`Zeitüberschreitung nach ${TIMEOUT_MS / 1000}s`)),
+    TIMEOUT_MS
+  );
   return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
@@ -19,10 +24,13 @@ function normalisiere(str: string): string {
 }
 
 function istTreffer(suchterm: string, kandidat: string): boolean {
-  const s = normalisiere(suchterm);
-  const k = normalisiere(kandidat);
-  if (s.length < 3 || k.length < 3) return false;
-  return k.includes(s) || s.includes(k);
+  const sTokens = normalisiere(suchterm).split(' ').filter((t) => t.length >= 2);
+  const kTokens = normalisiere(kandidat).split(' ').filter((t) => t.length >= 2);
+  if (sTokens.length === 0 || kTokens.length === 0) return false;
+  // Reihenfolge-unabhängig: jedes Token der kürzeren Namensliste muss in der
+  // längeren vorkommen (z. B. "Yun Ho-Jin" muss "Ho-Jin Yun" treffen).
+  const [kleiner, groesser] = sTokens.length <= kTokens.length ? [sTokens, kTokens] : [kTokens, sTokens];
+  return kleiner.every((t) => groesser.some((g) => g.includes(t) || t.includes(g)));
 }
 
 // ── UN Security Council Consolidated List ─────────────────────────────────────
@@ -32,6 +40,9 @@ async function pruefeUN(suchbegriffe: string[]): Promise<SanktionsTreffer[]> {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = await res.text();
   const doc = new DOMParser().parseFromString(text, 'text/xml');
+  if (doc.querySelector('parsererror')) {
+    throw new Error('Antwort der UN-Sanktionsliste konnte nicht als XML gelesen werden');
+  }
   const treffer: SanktionsTreffer[] = [];
 
   doc.querySelectorAll('INDIVIDUAL').forEach((el) => {
@@ -39,10 +50,14 @@ async function pruefeUN(suchbegriffe: string[]): Promise<SanktionsTreffer[]> {
       .map((tag) => el.querySelector(tag)?.textContent?.trim() ?? '')
       .filter(Boolean);
     const fullName = nameParts.join(' ');
-    if (suchbegriffe.some((s) => istTreffer(s, fullName))) {
+    const aliasNamen = Array.from(el.querySelectorAll('INDIVIDUAL_ALIAS ALIAS_NAME'))
+      .map((a) => a.textContent?.trim() ?? '')
+      .filter(Boolean);
+    const alleNamen = [fullName, ...aliasNamen];
+    if (suchbegriffe.some((s) => alleNamen.some((n) => istTreffer(s, n)))) {
       treffer.push({
         quelle: 'UN',
-        name: fullName,
+        name: aliasNamen.length ? `${fullName} (alias: ${aliasNamen.join(', ')})` : fullName,
         typ: 'Person',
         regelung: el.querySelector('UN_LIST_TYPE')?.textContent?.trim(),
       });
@@ -51,8 +66,16 @@ async function pruefeUN(suchbegriffe: string[]): Promise<SanktionsTreffer[]> {
 
   doc.querySelectorAll('ENTITY').forEach((el) => {
     const name = el.querySelector('FIRST_NAME')?.textContent?.trim() ?? '';
-    if (suchbegriffe.some((s) => istTreffer(s, name))) {
-      treffer.push({ quelle: 'UN', name, typ: 'Organisation' });
+    const aliasNamen = Array.from(el.querySelectorAll('ENTITY_ALIAS ALIAS_NAME'))
+      .map((a) => a.textContent?.trim() ?? '')
+      .filter(Boolean);
+    const alleNamen = [name, ...aliasNamen];
+    if (suchbegriffe.some((s) => alleNamen.some((n) => istTreffer(s, n)))) {
+      treffer.push({
+        quelle: 'UN',
+        name: aliasNamen.length ? `${name} (alias: ${aliasNamen.join(', ')})` : name,
+        typ: 'Organisation',
+      });
     }
   });
 

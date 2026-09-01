@@ -17,6 +17,7 @@ import { analysiereBhvFragebogen, berechneGesamteinschaetzung } from '../../util
 import { findeDokumentHinweise } from '../../utils/dokumentHinweise';
 import { pruefeSanktionen } from '../../utils/sanktionsAnalyse';
 import { analysiereRisiko } from '../../utils/risikoAnalyse';
+import { istEigenerVorgang } from '../../utils/berechtigung';
 
 function istAdresseVollstaendig(wa: AntragData['wagnisanschrift']): boolean {
   return !!(wa.strasse && wa.hausnummer && wa.plz && wa.ort && wa.land);
@@ -224,7 +225,8 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
   const letzteAblehnung = [...workflow].reverse().find((e): e is FreigabeAbgelehntEintrag => e.typ === 'freigabe_abgelehnt');
   // Über eine Freigabe entscheiden darf nur, wer laut Status-Workflow dazu berechtigt ist —
   // nicht der Vorgangs-Eigentümer selbst (sonst könnte man sich die eigene Freigabe erteilen/ablehnen).
-  const kannFreigabeErteilen = currentUser.rolle === 'spezialist' || currentUser.rolle === 'admin';
+  const kannFreigabeErteilen =
+    (currentUser.rolle === 'spezialist' || currentUser.rolle === 'admin') && !istEigenerVorgang(currentUser, data);
 
   const handleWeiterleiten = () => {
     const empfaenger = empfaengerOptionen.find((u) => u.id === empfaengerId);
@@ -351,9 +353,9 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
                 </>
               )}
             </>
-          ) : (
+          ) : freigabeAbgelehnt ? (
             <>
-              {freigabeAbgelehnt && letzteAblehnung && (
+              {letzteAblehnung && (
                 <Box sx={{ p: 1.5, bgcolor: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 1.5, mb: 1.5 }}>
                   <Typography sx={{ fontSize: '0.76rem', color: '#BE123C' }}>
                     Freigabe abgelehnt von <strong>{letzteAblehnung.erstelltVonName}</strong> am {formatDatum(letzteAblehnung.erstelltAm)}.
@@ -363,6 +365,12 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
                   </Typography>
                 </Box>
               )}
+              <Typography sx={{ fontSize: '0.74rem', color: '#64748B' }}>
+                Der Vorgang muss über den Status oben zuerst zur Überarbeitung zurückgewiesen werden, bevor er erneut zur Freigabe weitergeleitet werden kann.
+              </Typography>
+            </>
+          ) : (
+            <>
               <Select
                 size="small"
                 displayEmpty
@@ -508,11 +516,12 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
 interface Props {
   data: AntragData;
   onChange: (patch: Partial<AntragData>) => void;
+  onWorkflowChange: (patch: Partial<AntragData>) => void;
   currentUser: AppUser;
   users: AppUser[];
 }
 
-const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) => {
+const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, currentUser, users }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hochladen, setHochladen] = useState(false);
   const [pruefeLaeuft, setPruefeLaeuft] = useState(false);
@@ -825,7 +834,9 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) =>
                 />
               )}
             </Box>
-            {risikoAnalyse && <StandortKarte lat={risikoAnalyse.lat} lon={risikoAnalyse.lon} />}
+            {risikoAnalyse && risikoAnalyse.gesamtAmpel !== 'unbekannt' && (
+              <StandortKarte lat={risikoAnalyse.lat} lon={risikoAnalyse.lon} />
+            )}
           </Box>
         </Box>
       </Box>
@@ -877,7 +888,7 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) =>
         </Box>
       )}
 
-      <WorkflowSektion data={data} onChange={onChange} currentUser={currentUser} users={users} />
+      <WorkflowSektion data={data} onChange={onWorkflowChange} currentUser={currentUser} users={users} />
 
       {/* Hinweise auf Naturgefahren/Umweltrisiken aus Dokumenten (für Reiter 4) */}
       {bhvErgebnis && hinweise.length > 0 && (
