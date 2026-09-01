@@ -79,6 +79,35 @@ function enthaeltJahr(abschnitt: string): boolean {
   return /\b(19|20)\d{2}\b/.test(abschnitt);
 }
 
+function parseDeutscheZahl(rohZahl: string): number {
+  // "12.500.000" -> 12500000, "2,5" -> 2.5 (Tausenderpunkte entfernen, Komma zu Punkt)
+  return parseFloat(rohZahl.replace(/\./g, '').replace(',', '.'));
+}
+
+// Extrahiert alle im Abschnitt vorkommenden Euro-Beträge (inkl. "X Mio"-Schreibweise) als Zahl.
+// Fällt auf freistehende deutsch gruppierte Zahlen zurück, falls "Euro" im Layout als
+// eigenständiges Label neben statt direkt an der Zahl steht (siehe enthaeltGrossbetrag).
+function extrahiereBetraege(abschnitt: string): number[] {
+  const treffer: number[] = [];
+
+  for (const m of abschnitt.matchAll(/(\d+(?:,\d+)?)\s*mio\b/gi)) {
+    treffer.push(parseDeutscheZahl(m[1]) * 1_000_000);
+  }
+  for (const m of abschnitt.matchAll(/\b(\d+(?:[.,]\d+)*)\s*(?:euro|€)\b/gi)) {
+    treffer.push(parseDeutscheZahl(m[1]));
+  }
+  if (treffer.length === 0) {
+    for (const m of abschnitt.matchAll(/\b\d{1,3}(?:[.,]\d{3})+\b/g)) {
+      treffer.push(parseDeutscheZahl(m[0]));
+    }
+  }
+  return treffer;
+}
+
+function formatMio(betragInEuro: number): string {
+  return (betragInEuro / 1_000_000).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 const ABSCHNITTE: AbschnittConfig[] = [
   {
     id: 'betriebsgefahren',
@@ -264,11 +293,28 @@ const ABSCHNITTE: AbschnittConfig[] = [
       'für bearbeitungsschäden', 'im rahmen der', 'sachschaden', 'deckungssumme/', 'für feuerschäden an',
       'gemieteten gebäuden', 'sb:', 'euro',
     ],
-    bewerten: (abschnitt, staticLabels) => {
-      if (!enthaeltBetrag(abschnitt) && !enthaeltGrossbetrag(extraInhalt(abschnitt, staticLabels))) {
+    bewerten: (abschnitt) => {
+      const betraege = extrahiereBetraege(abschnitt);
+      if (betraege.length === 0) {
         return { stufe: 'unbeantwortet', begruendung: 'Keine gewünschten Deckungssummen im Dokument gefunden.' };
       }
-      return { stufe: 'niedrig', begruendung: 'Deckungssummen angegeben, keine Auffälligkeit ohne Vergleichswerte ableitbar.' };
+      const hoechsterBetrag = Math.max(...betraege);
+      if (hoechsterBetrag > 10_000_000) {
+        return {
+          stufe: 'hoch',
+          begruendung: `Höchste gewünschte Deckungssumme ca. ${formatMio(hoechsterBetrag)} Mio Euro — über 10 Mio Euro gilt als hohes Risiko.`,
+        };
+      }
+      if (hoechsterBetrag > 5_000_000) {
+        return {
+          stufe: 'mittel',
+          begruendung: `Höchste gewünschte Deckungssumme ca. ${formatMio(hoechsterBetrag)} Mio Euro — zwischen 5,01 und 10 Mio Euro gilt als mittleres Risiko.`,
+        };
+      }
+      return {
+        stufe: 'niedrig',
+        begruendung: `Höchste gewünschte Deckungssumme ca. ${formatMio(hoechsterBetrag)} Mio Euro — bis 5 Mio Euro gilt als niedriges Risiko.`,
+      };
     },
   },
   {
