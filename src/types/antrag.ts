@@ -104,6 +104,15 @@ export interface BhvAnalyseErgebnis {
   dokumentName: string;
 }
 
+export interface ManuelleRisikoUeberschreibung {
+  kategorieId: string;
+  stufe: BhvRisikoStufe;
+  kommentar: string;
+  erstelltVonId: string;
+  erstelltVonName: string;
+  erstelltAm: string;
+}
+
 export type NaturgefahrKategorie = 'hochwasser' | 'sturm' | 'erdbeben' | 'hagel' | 'waldbrand' | 'schnee';
 export type UmweltrisikoKategorieKey = 'luftemissionen' | 'gewaesserBoden' | 'abfall' | 'laerm' | 'brandExplosion';
 
@@ -120,6 +129,7 @@ export interface AnalyseDaten {
   dokumente: HochgeladenesDokument[];
   hinweise?: DokumentHinweis[];
   bhvErgebnis?: BhvAnalyseErgebnis;
+  manuelleUeberschreibungen?: ManuelleRisikoUeberschreibung[];
 }
 
 export type Sparte = 'Haftpflicht' | 'Transport' | 'Technische Versicherung';

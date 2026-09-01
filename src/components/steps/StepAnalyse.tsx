@@ -10,7 +10,8 @@ import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined';
 import ForwardToInboxOutlinedIcon from '@mui/icons-material/ForwardToInboxOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-import type { AntragData, BhvRisikoStufe, HochgeladenesDokument, Regelwerk, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag, FreigabeErteiltEintrag, FreigabeAbgelehntEintrag } from '../../types/antrag';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import type { AntragData, BhvRisikoStufe, BhvKategorieErgebnis, ManuelleRisikoUeberschreibung, HochgeladenesDokument, Regelwerk, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag, FreigabeErteiltEintrag, FreigabeAbgelehntEintrag } from '../../types/antrag';
 import type { AppUser } from '../../types/user';
 import { analysiereBhvFragebogen } from '../../utils/bhvAnalyse';
 import { findeDokumentHinweise } from '../../utils/dokumentHinweise';
@@ -93,6 +94,108 @@ function StufeChip({ stufe }: { stufe: BhvRisikoStufe }) {
 
 function formatDatum(iso: string): string {
   return new Date(iso).toLocaleDateString('de-DE');
+}
+
+const STUFE_OPTIONEN: BhvRisikoStufe[] = ['niedrig', 'mittel', 'hoch', 'unbeantwortet'];
+
+interface KategorieZeileProps {
+  index: number;
+  kategorie: BhvKategorieErgebnis;
+  ueberschreibung?: ManuelleRisikoUeberschreibung;
+  onUeberschreiben: (stufe: BhvRisikoStufe, kommentar: string) => void;
+}
+
+function KategorieZeile({ index, kategorie, ueberschreibung, onUeberschreiben }: KategorieZeileProps) {
+  const [bearbeiten, setBearbeiten] = useState(false);
+  const [stufe, setStufe] = useState<BhvRisikoStufe>(ueberschreibung?.stufe ?? kategorie.stufe);
+  const [kommentar, setKommentar] = useState('');
+
+  const anzeigeStufe = ueberschreibung?.stufe ?? kategorie.stufe;
+
+  const handleBearbeitenStarten = () => {
+    setStufe(ueberschreibung?.stufe ?? kategorie.stufe);
+    setKommentar('');
+    setBearbeiten(true);
+  };
+
+  const handleSpeichern = () => {
+    if (!kommentar.trim()) return;
+    onUeberschreiben(stufe, kommentar.trim());
+    setBearbeiten(false);
+    setKommentar('');
+  };
+
+  return (
+    <Box sx={{ mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+        <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
+          {index}. {kategorie.titel}
+        </Typography>
+        {!bearbeiten && (
+          <Tooltip title="Risikoeinschätzung manuell anpassen">
+            <IconButton size="small" onClick={handleBearbeitenStarten} sx={{ color: '#94A3B8', '&:hover': { color: '#0F172A' } }}>
+              <EditOutlinedIcon sx={{ fontSize: 15 }} />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+
+      {bearbeiten ? (
+        <Box sx={{ p: 1.5, bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Select
+            size="small"
+            fullWidth
+            value={stufe}
+            onChange={(e) => setStufe(e.target.value as BhvRisikoStufe)}
+            sx={{ bgcolor: '#fff', fontSize: '0.82rem' }}
+          >
+            {STUFE_OPTIONEN.map((s) => (
+              <MenuItem key={s} value={s}>{STUFE_CONFIG[s].label}</MenuItem>
+            ))}
+          </Select>
+          <TextField
+            size="small"
+            fullWidth
+            multiline
+            minRows={2}
+            placeholder="Kommentar (Pflichtfeld) — Begründung für die manuelle Änderung"
+            value={kommentar}
+            onChange={(e) => setKommentar(e.target.value)}
+            sx={{ bgcolor: '#fff' }}
+          />
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="contained" size="small" disabled={!kommentar.trim()} onClick={handleSpeichern}>
+              Speichern
+            </Button>
+            <Button variant="outlined" size="small" onClick={() => setBearbeiten(false)}>
+              Abbrechen
+            </Button>
+          </Box>
+        </Box>
+      ) : (
+        <Box sx={{ p: 1.5, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography sx={{ fontSize: '0.78rem', color: '#64748B', lineHeight: 1.5 }}>
+                {ueberschreibung ? ueberschreibung.kommentar : kategorie.begruendung}
+              </Typography>
+              {ueberschreibung && (
+                <Typography sx={{ fontSize: '0.7rem', color: '#94A3B8', mt: 0.75, fontStyle: 'italic' }}>
+                  Automatische Einschätzung: {kategorie.begruendung} ({STUFE_CONFIG[kategorie.stufe].label})
+                </Typography>
+              )}
+            </Box>
+            <StufeChip stufe={anzeigeStufe} />
+          </Box>
+          {ueberschreibung && (
+            <Typography sx={{ fontSize: '0.7rem', color: '#94A3B8', mt: 1, pt: 1, borderTop: '1px solid #F1F5F9' }}>
+              Manuell geändert von <strong>{ueberschreibung.erstelltVonName}</strong> am {formatDatum(ueberschreibung.erstelltAm)}
+            </Typography>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
 }
 
 interface WorkflowProps {
@@ -423,9 +526,27 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) =>
   const bhvErgebnis = analyse.bhvErgebnis;
   const hinweise = analyse.hinweise ?? [];
   const regelwerk: Regelwerk = analyse.regelwerk ?? 'betriebshaftpflicht';
+  const manuelleUeberschreibungen = analyse.manuelleUeberschreibungen ?? [];
 
   const handleRegelwerkAendern = (wert: Regelwerk) => {
     onChange({ analyse: { ...analyse, regelwerk: wert } });
+  };
+
+  const handleKategorieUeberschreiben = (kategorieId: string, stufe: BhvRisikoStufe, kommentar: string) => {
+    const eintrag: ManuelleRisikoUeberschreibung = {
+      kategorieId,
+      stufe,
+      kommentar,
+      erstelltVonId: currentUser.id,
+      erstelltVonName: `${currentUser.vorname} ${currentUser.nachname}`,
+      erstelltAm: new Date().toISOString(),
+    };
+    onChange({
+      analyse: {
+        ...analyse,
+        manuelleUeberschreibungen: [...manuelleUeberschreibungen.filter((u) => u.kategorieId !== kategorieId), eintrag],
+      },
+    });
   };
 
   const sanktionsAnalyse = data.sanktionsAnalyse;
@@ -709,17 +830,13 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, currentUser, users }) =>
             Analyse von: {bhvErgebnis.dokumentName} · {new Date(bhvErgebnis.analysiertAm).toLocaleString('de-DE')}
           </Typography>
           {bhvErgebnis.kategorien.map((k, i) => (
-            <Box key={k.id} sx={{ mb: 2 }}>
-              <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', mb: 1 }}>
-                {i + 2}. {k.titel}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2 }}>
-                <Box sx={{ flex: 1 }}>
-                  <Typography sx={{ fontSize: '0.78rem', color: '#64748B', lineHeight: 1.5 }}>{k.begruendung}</Typography>
-                </Box>
-                <StufeChip stufe={k.stufe} />
-              </Box>
-            </Box>
+            <KategorieZeile
+              key={k.id}
+              index={i + 2}
+              kategorie={k}
+              ueberschreibung={manuelleUeberschreibungen.find((u) => u.kategorieId === k.id)}
+              onUeberschreiben={(stufe, kommentar) => handleKategorieUeberschreiben(k.id, stufe, kommentar)}
+            />
           ))}
         </Box>
       )}
