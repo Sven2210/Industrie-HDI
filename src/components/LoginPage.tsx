@@ -134,7 +134,7 @@ const LoginPage: React.FC<Props> = ({ users, onLogin }) => {
                     '&:hover': { borderColor: '#00612C', boxShadow: '0 2px 10px rgba(0, 97, 44,0.12)' },
                   }}
                 >
-                  <Avatar sx={{ width: 40, height: 40, bgcolor: '#1E3A8A', fontSize: '0.85rem', fontWeight: 700 }}>
+                  <Avatar sx={{ width: 40, height: 40, bgcolor: '#00612C', fontSize: '0.85rem', fontWeight: 700 }}>
                     {u.kuerzel}
                   </Avatar>
                   <Box sx={{ flex: 1, minWidth: 0 }}>

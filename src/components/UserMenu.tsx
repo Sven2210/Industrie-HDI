@@ -64,7 +64,7 @@ const UserMenu: React.FC<Props> = ({ currentUser, users, onSwitchUser, onLogout,
           '&:hover': { bgcolor: dark ? 'rgba(255,255,255,0.06)' : '#F1F5F9' },
         }}
       >
-        <Avatar sx={{ width: 30, height: 30, bgcolor: '#1E3A8A', fontSize: '0.7rem', fontWeight: 700 }}>
+        <Avatar sx={{ width: 30, height: 30, bgcolor: '#00612C', fontSize: '0.7rem', fontWeight: 700 }}>
           {currentUser.kuerzel}
         </Avatar>
         <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
@@ -87,7 +87,7 @@ const UserMenu: React.FC<Props> = ({ currentUser, users, onSwitchUser, onLogout,
       >
         {/* Aktueller User */}
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar sx={{ width: 40, height: 40, bgcolor: '#1E3A8A', fontSize: '0.85rem', fontWeight: 700 }}>
+          <Avatar sx={{ width: 40, height: 40, bgcolor: '#00612C', fontSize: '0.85rem', fontWeight: 700 }}>
             {currentUser.kuerzel}
           </Avatar>
           <Box sx={{ minWidth: 0 }}>
