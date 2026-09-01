@@ -157,7 +157,7 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
 
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         {/* An Spezialist/Führungskraft weiterleiten */}
-        <Box sx={{ flex: '1 1 280px', p: 2, bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 2 }}>
+        <Box sx={{ flex: '1 1 280px', p: 2, bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <SupervisorAccountOutlinedIcon sx={{ fontSize: 17, color: '#3730A3' }} />
             <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: '#0F172A' }}>
@@ -169,7 +169,7 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
           </Typography>
 
           {wartetAufFreigabe && letzteWeiterleitung ? (
-            <Box sx={{ p: 1.5, bgcolor: '#EAF5EE', border: '1px solid #BFDBFE', borderRadius: 1.5 }}>
+            <Box sx={{ p: 1.5, bgcolor: '#EAF5EE', border: '1px solid #BFDBFE', borderRadius: 1.5, flex: 1 }}>
               <Typography sx={{ fontSize: '0.76rem', color: '#004A21' }}>
                 Freigabe angefordert bei <strong>{letzteWeiterleitung.empfaengerName}</strong> am {formatDatum(letzteWeiterleitung.erstelltAm)}.
               </Typography>
@@ -202,7 +202,11 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
                 placeholder="Grund / Notiz"
                 value={grund}
                 onChange={(e) => setGrund(e.target.value)}
-                sx={{ bgcolor: '#fff', mb: 1.5 }}
+                sx={{
+                  bgcolor: '#fff', mb: 1.5, flex: 1,
+                  '& .MuiInputBase-root': { height: '100%', alignItems: 'flex-start' },
+                  '& .MuiInputBase-input': { height: '100% !important', overflow: 'auto' },
+                }}
               />
               <Button
                 variant="contained"
@@ -218,7 +222,7 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
         </Box>
 
         {/* Rückmeldung an Vertrieb */}
-        <Box sx={{ flex: '1 1 280px', p: 2, bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 2 }}>
+        <Box sx={{ flex: '1 1 280px', p: 2, bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <ForwardToInboxOutlinedIcon sx={{ fontSize: 17, color: '#B45309' }} />
             <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: '#0F172A' }}>
@@ -230,7 +234,7 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
           </Typography>
 
           {!bhvErgebnis ? (
-            <Typography sx={{ fontSize: '0.76rem', color: '#94A3B8' }}>
+            <Typography sx={{ fontSize: '0.76rem', color: '#94A3B8', flex: 1 }}>
               Erst nach der Dokumentenanalyse verfügbar.
             </Typography>
           ) : (
@@ -254,7 +258,11 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
                 placeholder="Zusätzliche Anmerkung"
                 value={anmerkung}
                 onChange={(e) => setAnmerkung(e.target.value)}
-                sx={{ bgcolor: '#fff', mb: 1.5 }}
+                sx={{
+                  bgcolor: '#fff', mb: 1.5, flex: 1,
+                  '& .MuiInputBase-root': { height: '100%', alignItems: 'flex-start' },
+                  '& .MuiInputBase-input': { height: '100% !important', overflow: 'auto' },
+                }}
               />
               <Button
                 variant="contained"
