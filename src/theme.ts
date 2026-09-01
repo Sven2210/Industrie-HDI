@@ -4,15 +4,15 @@ const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#2563EB',
-      light: '#3B82F6',
-      dark: '#1D4ED8',
+      main: '#00612C',
+      light: '#3D8B5F',
+      dark: '#004A21',
       contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#06B6D4',
-      light: '#22D3EE',
-      dark: '#0891B2',
+      main: '#3D8B5F',
+      light: '#7BC9A0',
+      dark: '#2E7D52',
       contrastText: '#FFFFFF',
     },
     background: {
@@ -79,11 +79,11 @@ const theme = createTheme({
           fontSize: '0.875rem',
         },
         contained: {
-          background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
-          boxShadow: '0 2px 8px rgba(37,99,235,0.35)',
+          background: 'linear-gradient(135deg, #00612C 0%, #004A21 100%)',
+          boxShadow: '0 2px 8px rgba(0,97,44,0.35)',
           '&:hover': {
-            background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-            boxShadow: '0 4px 16px rgba(37,99,235,0.45)',
+            background: 'linear-gradient(135deg, #3D8B5F 0%, #00612C 100%)',
+            boxShadow: '0 4px 16px rgba(0,97,44,0.45)',
           },
           '&:disabled': {
             background: '#E2E8F0',
@@ -94,9 +94,9 @@ const theme = createTheme({
           borderColor: '#E2E8F0',
           color: '#475569',
           '&:hover': {
-            borderColor: '#2563EB',
-            color: '#2563EB',
-            bgcolor: alpha('#2563EB', 0.04),
+            borderColor: '#00612C',
+            color: '#00612C',
+            bgcolor: alpha('#00612C', 0.04),
           },
         },
       },
@@ -114,18 +114,18 @@ const theme = createTheme({
             '& fieldset': { borderColor: '#E2E8F0', borderWidth: '1.5px' },
             '&:hover fieldset': { borderColor: '#94A3B8' },
             '&.Mui-focused fieldset': {
-              borderColor: '#2563EB',
+              borderColor: '#00612C',
               borderWidth: '2px',
             },
             '&.Mui-focused': {
-              boxShadow: '0 0 0 3px rgba(37,99,235,0.12)',
+              boxShadow: '0 0 0 3px rgba(0,97,44,0.12)',
             },
           },
           '& .MuiInputLabel-root': {
             fontSize: '0.8rem',
             fontWeight: 600,
             color: '#64748B',
-            '&.Mui-focused': { color: '#2563EB' },
+            '&.Mui-focused': { color: '#00612C' },
           },
           '& .MuiFormHelperText-root': {
             marginLeft: 0,
@@ -183,8 +183,8 @@ const theme = createTheme({
           color: '#D97706',
         },
         colorPrimary: {
-          backgroundColor: alpha('#2563EB', 0.1),
-          color: '#1D4ED8',
+          backgroundColor: alpha('#00612C', 0.1),
+          color: '#004A21',
         },
       },
     },
@@ -209,10 +209,10 @@ const theme = createTheme({
           '& .MuiAlert-icon': { color: '#F59E0B' },
         },
         colorInfo: {
-          backgroundColor: alpha('#2563EB', 0.06),
-          borderColor: alpha('#2563EB', 0.15),
+          backgroundColor: alpha('#00612C', 0.06),
+          borderColor: alpha('#00612C', 0.15),
           color: '#1E3A8A',
-          '& .MuiAlert-icon': { color: '#2563EB' },
+          '& .MuiAlert-icon': { color: '#00612C' },
         },
       },
     },
@@ -245,7 +245,7 @@ const theme = createTheme({
         root: { borderRadius: 4, backgroundColor: '#E2E8F0' },
         bar: {
           borderRadius: 4,
-          background: 'linear-gradient(90deg, #2563EB, #06B6D4)',
+          background: 'linear-gradient(90deg, #00612C, #3D8B5F)',
         },
       },
     },

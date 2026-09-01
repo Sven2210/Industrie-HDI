@@ -4,7 +4,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableRow,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import FactoryIcon from '@mui/icons-material/Factory';
+import hdiLogo from '../assets/hdi-logo.webp';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import PersonIcon from '@mui/icons-material/Person';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -50,18 +50,18 @@ const AdminUebersichtPage: React.FC<Props> = ({
     <Box sx={{ minHeight: '100vh', bgcolor: '#F1F5F9', display: 'flex', flexDirection: 'column' }}>
       {/* Top bar */}
       <Box sx={{
-        bgcolor: '#0B1426', px: { xs: 3, md: 5 }, py: 2,
+        bgcolor: '#0A1F14', px: { xs: 3, md: 5 }, py: 2,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
         position: 'sticky', top: 0, zIndex: 10,
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box sx={{ width: 36, height: 36, borderRadius: '10px', background: 'linear-gradient(135deg, #2563EB, #06B6D4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FactoryIcon sx={{ color: '#fff', fontSize: 20 }} />
+          <Box sx={{ width: 46, height: 36, borderRadius: '8px', bgcolor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 0.5, flexShrink: 0 }}>
+            <Box component="img" src={hdiLogo} alt="HDI" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </Box>
           <Box>
             <Typography sx={{ color: '#F8FAFC', fontWeight: 800, fontSize: '0.95rem', lineHeight: 1.1 }}>
-              <Box component="span" sx={{ color: '#60A5FA' }}>TARIF</Box>rechner
+              <Box component="span" sx={{ color: '#7BC9A0' }}>TARIF</Box>rechner
             </Typography>
             <Typography sx={{ color: '#334155', fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               INdustrieversicherung
@@ -91,7 +91,7 @@ const AdminUebersichtPage: React.FC<Props> = ({
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(6, 1fr)' }, gap: 2, mb: 3 }}>
           <Box sx={{ bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 3, p: 2.5, boxShadow: '0 2px 8px rgba(15,23,42,0.06)' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <AssignmentIcon sx={{ fontSize: 16, color: '#2563EB' }} />
+              <AssignmentIcon sx={{ fontSize: 16, color: '#00612C' }} />
               <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Gesamt
               </Typography>
@@ -114,7 +114,7 @@ const AdminUebersichtPage: React.FC<Props> = ({
         {/* Verteilung nach Underwriter */}
         <Box sx={{ bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 3, p: 3, mb: 3, boxShadow: '0 2px 8px rgba(15,23,42,0.06)' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <PersonIcon sx={{ fontSize: 16, color: '#2563EB' }} />
+            <PersonIcon sx={{ fontSize: 16, color: '#00612C' }} />
             <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Verteilung nach Underwriter
             </Typography>
@@ -126,9 +126,9 @@ const AdminUebersichtPage: React.FC<Props> = ({
                   {name}
                 </Typography>
                 <Box sx={{ flex: 1, height: 8, borderRadius: 4, bgcolor: '#F1F5F9', overflow: 'hidden' }}>
-                  <Box sx={{ height: '100%', width: `${(count / maxUnderwriterCount) * 100}%`, bgcolor: '#2563EB', borderRadius: 4, transition: 'width 0.3s ease' }} />
+                  <Box sx={{ height: '100%', width: `${(count / maxUnderwriterCount) * 100}%`, bgcolor: '#00612C', borderRadius: 4, transition: 'width 0.3s ease' }} />
                 </Box>
-                <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: '#2563EB', width: 24, textAlign: 'right' }}>
+                <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: '#00612C', width: 24, textAlign: 'right' }}>
                   {count}
                 </Typography>
               </Box>
@@ -197,12 +197,12 @@ const AdminUebersichtPage: React.FC<Props> = ({
                     <TableCell sx={{ py: 2 }} onClick={(e) => e.stopPropagation()}>
                       <Box sx={{ display: 'flex', gap: 0.5 }}>
                         <Tooltip title="Anzeigen">
-                          <IconButton size="small" onClick={() => onEditVorgang(v.id)} sx={{ color: '#64748B', '&:hover': { color: '#2563EB', bgcolor: '#EFF6FF' } }}>
+                          <IconButton size="small" onClick={() => onEditVorgang(v.id)} sx={{ color: '#64748B', '&:hover': { color: '#00612C', bgcolor: '#EAF5EE' } }}>
                             <VisibilityOutlinedIcon sx={{ fontSize: 17 }} />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Bearbeiten">
-                          <IconButton size="small" onClick={() => onEditVorgang(v.id)} sx={{ color: '#64748B', '&:hover': { color: '#2563EB', bgcolor: '#EFF6FF' } }}>
+                          <IconButton size="small" onClick={() => onEditVorgang(v.id)} sx={{ color: '#64748B', '&:hover': { color: '#00612C', bgcolor: '#EAF5EE' } }}>
                             <EditOutlinedIcon sx={{ fontSize: 17 }} />
                           </IconButton>
                         </Tooltip>

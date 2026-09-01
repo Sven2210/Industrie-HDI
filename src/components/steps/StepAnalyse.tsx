@@ -169,11 +169,11 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
           </Typography>
 
           {wartetAufFreigabe && letzteWeiterleitung ? (
-            <Box sx={{ p: 1.5, bgcolor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 1.5 }}>
-              <Typography sx={{ fontSize: '0.76rem', color: '#1D4ED8' }}>
+            <Box sx={{ p: 1.5, bgcolor: '#EAF5EE', border: '1px solid #BFDBFE', borderRadius: 1.5 }}>
+              <Typography sx={{ fontSize: '0.76rem', color: '#004A21' }}>
                 Freigabe angefordert bei <strong>{letzteWeiterleitung.empfaengerName}</strong> am {formatDatum(letzteWeiterleitung.erstelltAm)}.
               </Typography>
-              <Typography sx={{ fontSize: '0.74rem', color: '#1D4ED8', fontStyle: 'italic', mt: 0.5 }}>
+              <Typography sx={{ fontSize: '0.74rem', color: '#004A21', fontStyle: 'italic', mt: 0.5 }}>
                 „{letzteWeiterleitung.grund}"
               </Typography>
             </Box>

@@ -82,7 +82,7 @@ const RisikoRow: React.FC<{
 
         {/* Note toggle */}
         <IconButton size="small" onClick={() => setShowNote(!showNote)}
-          sx={{ color: item.anmerkungen ? '#2563EB' : '#CBD5E1', '&:hover': { color: '#2563EB' } }}>
+          sx={{ color: item.anmerkungen ? '#00612C' : '#CBD5E1', '&:hover': { color: '#00612C' } }}>
           <EditNoteIcon sx={{ fontSize: 18 }} />
         </IconButton>
 
@@ -175,7 +175,7 @@ const Step3_Risikocheck: React.FC<Props> = ({ data, onChange }) => {
           startIcon={<AddIcon />}
           size="small"
           onClick={addCustomRisk}
-          sx={{ mt: 2, color: '#2563EB', fontWeight: 600, fontSize: '0.8rem', textTransform: 'none' }}
+          sx={{ mt: 2, color: '#00612C', fontWeight: 600, fontSize: '0.8rem', textTransform: 'none' }}
         >
           Risiko hinzufügen
         </Button>

@@ -8,7 +8,7 @@ import type { AppUser } from '../types/user';
 import { ROLLE_LABELS } from '../types/user';
 
 const ROLLE_COLOR: Record<AppUser['rolle'], { bg: string; text: string }> = {
-  nutzer: { bg: '#EFF6FF', text: '#2563EB' },
+  nutzer: { bg: '#EAF5EE', text: '#00612C' },
   admin: { bg: '#FEF3C7', text: '#B45309' },
   spezialist: { bg: '#EDE9FE', text: '#5B21B6' },
 };

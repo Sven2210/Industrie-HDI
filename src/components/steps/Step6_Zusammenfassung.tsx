@@ -27,7 +27,7 @@ interface Props {
 const SummaryBlock: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
   <Box sx={{ p: 2.5, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2.5, mb: 2 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-      <Box sx={{ width: 28, height: 28, borderRadius: '8px', bgcolor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' }}>
+      <Box sx={{ width: 28, height: 28, borderRadius: '8px', bgcolor: '#EAF5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00612C' }}>
         {icon}
       </Box>
       <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#0F172A' }}>{title}</Typography>
@@ -39,7 +39,7 @@ const SummaryBlock: React.FC<{ icon: React.ReactNode; title: string; children: R
 const FieldRow: React.FC<{ label: string; value: string; highlight?: boolean }> = ({ label, value, highlight }) => (
   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', py: 0.5, borderBottom: '1px dashed #F1F5F9', '&:last-child': { borderBottom: 'none' } }}>
     <Typography sx={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 500 }}>{label}</Typography>
-    <Typography sx={{ fontSize: highlight ? '0.88rem' : '0.82rem', fontWeight: highlight ? 700 : 600, color: highlight ? '#1D4ED8' : '#0F172A', textAlign: 'right', maxWidth: '60%' }}>{value || '—'}</Typography>
+    <Typography sx={{ fontSize: highlight ? '0.88rem' : '0.82rem', fontWeight: highlight ? 700 : 600, color: highlight ? '#004A21' : '#0F172A', textAlign: 'right', maxWidth: '60%' }}>{value || '—'}</Typography>
   </Box>
 );
 
@@ -112,7 +112,7 @@ const Step6_Zusammenfassung: React.FC<Props> = ({ data, onSave }) => {
 
       {data.vorgangsnr && (
         <Box sx={{ mb: 2.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Chip label={`Vorgangsnr.: ${data.vorgangsnr}`} sx={{ fontWeight: 700, bgcolor: '#0B1426', color: '#60A5FA', fontSize: '0.78rem' }} />
+          <Chip label={`Vorgangsnr.: ${data.vorgangsnr}`} sx={{ fontWeight: 700, bgcolor: '#0A1F14', color: '#7BC9A0', fontSize: '0.78rem' }} />
           <Chip label={data.status} color={data.status === 'aktiv' ? 'success' : data.status === 'abgelehnt' ? 'error' : 'warning'} size="small" />
         </Box>
       )}
@@ -177,7 +177,7 @@ const Step6_Zusammenfassung: React.FC<Props> = ({ data, onSave }) => {
 
           <Box sx={{ p: 2.5, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2.5, mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <Box sx={{ width: 28, height: 28, borderRadius: '8px', bgcolor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' }}>
+              <Box sx={{ width: 28, height: 28, borderRadius: '8px', bgcolor: '#EAF5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00612C' }}>
                 <BusinessIcon sx={{ fontSize: 15 }} />
               </Box>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#0F172A' }}>Mitversicherte Unternehmen</Typography>
@@ -211,13 +211,13 @@ const Step6_Zusammenfassung: React.FC<Props> = ({ data, onSave }) => {
           </Box>
 
           {nettoGesamt > 0 && (
-            <Box sx={{ p: 3, bgcolor: '#0B1426', borderRadius: 2.5 }}>
+            <Box sx={{ p: 3, bgcolor: '#0A1F14', borderRadius: 2.5 }}>
               <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 1.5 }}>
                 Vorschlagspreis
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <Typography sx={{ color: '#60A5FA', fontSize: '0.78rem', fontWeight: 600 }}>Netto gesamt</Typography>
+                  <Typography sx={{ color: '#7BC9A0', fontSize: '0.78rem', fontWeight: 600 }}>Netto gesamt</Typography>
                   <Typography sx={{ color: '#F8FAFC', fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
                     {nettoGesamt.toLocaleString('de-DE')} EUR
                   </Typography>

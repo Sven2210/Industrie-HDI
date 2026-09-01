@@ -72,7 +72,7 @@ const LandingPage: React.FC<Props> = ({ onStart }) => {
               width: 36,
               height: 36,
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #2563EB, #06B6D4)',
+              background: 'linear-gradient(135deg, #00612C, #3D8B5F)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -96,9 +96,9 @@ const LandingPage: React.FC<Props> = ({ onStart }) => {
           label="Industrieversicherung 2025"
           size="small"
           sx={{
-            bgcolor: 'rgba(37,99,235,0.25)',
+            bgcolor: 'rgba(0, 97, 44,0.25)',
             color: '#93C5FD',
-            border: '1px solid rgba(37,99,235,0.4)',
+            border: '1px solid rgba(0, 97, 44,0.4)',
             fontWeight: 600,
             fontSize: '0.7rem',
           }}
@@ -126,8 +126,8 @@ const LandingPage: React.FC<Props> = ({ onStart }) => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 0.75,
-            bgcolor: 'rgba(37,99,235,0.2)',
-            border: '1px solid rgba(37,99,235,0.35)',
+            bgcolor: 'rgba(0, 97, 44,0.2)',
+            border: '1px solid rgba(0, 97, 44,0.35)',
             borderRadius: '100px',
             px: 2,
             py: 0.75,
@@ -139,7 +139,7 @@ const LandingPage: React.FC<Props> = ({ onStart }) => {
               width: 6,
               height: 6,
               borderRadius: '50%',
-              bgcolor: '#60A5FA',
+              bgcolor: '#7BC9A0',
               animation: 'pulse 2s infinite',
               '@keyframes pulse': {
                 '0%, 100%': { opacity: 1 },
@@ -169,7 +169,7 @@ const LandingPage: React.FC<Props> = ({ onStart }) => {
           <Box
             component="span"
             sx={{
-              background: 'linear-gradient(90deg, #60A5FA, #22D3EE)',
+              background: 'linear-gradient(90deg, #7BC9A0, #7BC9A0)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -212,7 +212,7 @@ const LandingPage: React.FC<Props> = ({ onStart }) => {
                 backdropFilter: 'blur(8px)',
               }}
             >
-              <Box sx={{ color: '#60A5FA', display: 'flex' }}>{f.icon}</Box>
+              <Box sx={{ color: '#7BC9A0', display: 'flex' }}>{f.icon}</Box>
               <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.8rem', fontWeight: 600 }}>
                 {f.label}
               </Typography>
@@ -232,12 +232,12 @@ const LandingPage: React.FC<Props> = ({ onStart }) => {
             px: 5,
             py: 1.75,
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
-            boxShadow: '0 8px 32px rgba(37,99,235,0.5)',
+            background: 'linear-gradient(135deg, #00612C 0%, #004A21 100%)',
+            boxShadow: '0 8px 32px rgba(0, 97, 44,0.5)',
             letterSpacing: '-0.01em',
             '&:hover': {
-              background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-              boxShadow: '0 12px 40px rgba(37,99,235,0.65)',
+              background: 'linear-gradient(135deg, #3D8B5F 0%, #00612C 100%)',
+              boxShadow: '0 12px 40px rgba(0, 97, 44,0.65)',
               transform: 'translateY(-1px)',
             },
             transition: 'all 0.2s',
@@ -275,7 +275,7 @@ const LandingPage: React.FC<Props> = ({ onStart }) => {
         ].map((s) => (
           <Box key={s.label} sx={{ textAlign: 'center' }}>
             <Typography
-              sx={{ color: '#60A5FA', fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em' }}
+              sx={{ color: '#7BC9A0', fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em' }}
             >
               {s.value}
             </Typography>

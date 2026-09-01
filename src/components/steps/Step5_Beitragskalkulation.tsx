@@ -50,7 +50,7 @@ const UnternehmenCard: React.FC<{
     <Box sx={{ p: 2.5, border: '1px solid #E2E8F0', borderRadius: 2.5, mb: 2, bgcolor: '#FAFAFA', position: 'relative' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: '#1D4ED8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: '#004A21', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <BusinessIcon sx={{ fontSize: 14, color: 'white' }} />
           </Box>
           <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#0F172A' }}>
@@ -80,7 +80,7 @@ const UnternehmenCard: React.FC<{
           ))}
         </TextField>
         {item.risikobelegenheit && (
-          <Chip label={RISIKOBELEGENHEIT_LABELS[item.risikobelegenheit]} size="small" sx={{ mt: 0.75, bgcolor: '#EFF6FF', color: '#1D4ED8', fontSize: '0.68rem', border: '1px solid #DBEAFE' }} />
+          <Chip label={RISIKOBELEGENHEIT_LABELS[item.risikobelegenheit]} size="small" sx={{ mt: 0.75, bgcolor: '#EAF5EE', color: '#004A21', fontSize: '0.68rem', border: '1px solid #D6EAE0' }} />
         )}
       </Box>
 
@@ -112,7 +112,7 @@ const UnternehmenCard: React.FC<{
         <Box sx={{ mt: 2.5, p: 2, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
           <Box>
             <Typography sx={{ fontSize: '0.65rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>ABS</Typography>
-            <Typography sx={{ fontSize: '0.9rem', fontWeight: 700, color: '#1D4ED8' }}>{abs.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} ‰</Typography>
+            <Typography sx={{ fontSize: '0.9rem', fontWeight: 700, color: '#004A21' }}>{abs.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} ‰</Typography>
           </Box>
           <Box>
             <Typography sx={{ fontSize: '0.65rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nettobeitrag</Typography>
@@ -189,9 +189,9 @@ const Step5_Beitragskalkulation: React.FC<Props> = ({ data, onChange }) => {
       )}
 
       {abs > 0 && (
-        <Box sx={{ mb: 3, p: 2, bgcolor: '#EFF6FF', border: '1px solid #DBEAFE', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <EuroIcon sx={{ color: '#2563EB', fontSize: 18 }} />
-          <Typography sx={{ fontSize: '0.82rem', color: '#1D4ED8', fontWeight: 600 }}>
+        <Box sx={{ mb: 3, p: 2, bgcolor: '#EAF5EE', border: '1px solid #D6EAE0', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <EuroIcon sx={{ color: '#00612C', fontSize: 18 }} />
+          <Typography sx={{ fontSize: '0.82rem', color: '#004A21', fontWeight: 600 }}>
             Vorschlagsbeitragssatz: <strong>{abs.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} ‰</strong> (aus Schritt 4)
           </Typography>
         </Box>
@@ -211,13 +211,13 @@ const Step5_Beitragskalkulation: React.FC<Props> = ({ data, onChange }) => {
 
       {/* Totals */}
       {totals.netto > 0 && (
-        <Box sx={{ p: 3, bgcolor: '#0B1426', borderRadius: 3 }}>
+        <Box sx={{ p: 3, bgcolor: '#0A1F14', borderRadius: 3 }}>
           <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 2 }}>
             Gesamtprämie
           </Typography>
           <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             <Box>
-              <Typography sx={{ color: '#60A5FA', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Netto gesamt</Typography>
+              <Typography sx={{ color: '#7BC9A0', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Netto gesamt</Typography>
               <Typography sx={{ color: '#F8FAFC', fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
                 {totals.netto.toLocaleString('de-DE')} EUR
               </Typography>

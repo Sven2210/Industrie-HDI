@@ -30,7 +30,7 @@ const BETRIEBSARTEN: Record<Sparte, string[]> = {
 };
 
 const SPARTE_COLORS: Record<Sparte, { bg: string; border: string; text: string; chip: string }> = {
-  Haftpflicht:            { bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8', chip: '#DBEAFE' },
+  Haftpflicht:            { bg: '#EAF5EE', border: '#BFDBFE', text: '#004A21', chip: '#D6EAE0' },
   Transport:              { bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D', chip: '#DCFCE7' },
   'Technische Versicherung': { bg: '#FFF7ED', border: '#FED7AA', text: '#C2410C', chip: '#FFEDD5' },
 };
@@ -271,7 +271,7 @@ const Step2_Anbahnungsdaten: React.FC<Props> = ({ data, onChange }) => {
                 sx={{
                   border: '1.5px solid #E2E8F0 !important', borderRadius: '8px !important',
                   px: 2.5, py: 1, fontSize: '0.82rem', fontWeight: 600, textTransform: 'none',
-                  '&.Mui-selected': { bgcolor: '#EFF6FF !important', borderColor: '#2563EB !important', color: '#1D4ED8' },
+                  '&.Mui-selected': { bgcolor: '#EAF5EE !important', borderColor: '#00612C !important', color: '#004A21' },
                 }}>
                 {z}
               </ToggleButton>

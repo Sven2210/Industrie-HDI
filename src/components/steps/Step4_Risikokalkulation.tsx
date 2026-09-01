@@ -117,7 +117,7 @@ const Step4_Risikokalkulation: React.FC<Props> = ({ data, onChange }) => {
             </Box>
           ))}
           <Button size="small" startIcon={<AddIcon />} onClick={addWKZ}
-            sx={{ color: '#2563EB', fontWeight: 600, fontSize: '0.78rem', textTransform: 'none', mt: 0.5 }}>
+            sx={{ color: '#00612C', fontWeight: 600, fontSize: '0.78rem', textTransform: 'none', mt: 0.5 }}>
             Wagniskennziffer hinzufügen
           </Button>
         </Box>
@@ -209,11 +209,11 @@ const Step4_Risikokalkulation: React.FC<Props> = ({ data, onChange }) => {
           </Box>
 
           {/* Risikobeitragssatz */}
-          <Box sx={{ p: 2, bgcolor: rbs > 0 ? '#EFF6FF' : '#F8FAFC', border: `2px solid ${rbs > 0 ? '#DBEAFE' : '#E2E8F0'}`, borderRadius: 2, mb: 2 }}>
+          <Box sx={{ p: 2, bgcolor: rbs > 0 ? '#EAF5EE' : '#F8FAFC', border: `2px solid ${rbs > 0 ? '#D6EAE0' : '#E2E8F0'}`, borderRadius: 2, mb: 2 }}>
             <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.5 }}>
               Risikobeitragssatz
             </Typography>
-            <Typography sx={{ fontSize: '1.35rem', fontWeight: 800, color: rbs > 0 ? '#1D4ED8' : '#CBD5E1', letterSpacing: '-0.02em' }}>
+            <Typography sx={{ fontSize: '1.35rem', fontWeight: 800, color: rbs > 0 ? '#004A21' : '#CBD5E1', letterSpacing: '-0.02em' }}>
               {calcLabel(rbs)}
             </Typography>
             <Typography sx={{ fontSize: '0.68rem', color: '#94A3B8', mt: 0.25 }}>
@@ -248,8 +248,8 @@ const Step4_Risikokalkulation: React.FC<Props> = ({ data, onChange }) => {
           </Box>
 
           {/* Vorschlagsbeitragssatz */}
-          <Box sx={{ p: 2.5, bgcolor: abs > 0 ? '#0B1426' : '#F1F5F9', borderRadius: 2 }}>
-            <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: abs > 0 ? '#60A5FA' : '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.5 }}>
+          <Box sx={{ p: 2.5, bgcolor: abs > 0 ? '#0A1F14' : '#F1F5F9', borderRadius: 2 }}>
+            <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: abs > 0 ? '#7BC9A0' : '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.5 }}>
               Vorschlagsbeitragssatz
             </Typography>
             <Typography sx={{ fontSize: '1.6rem', fontWeight: 800, color: abs > 0 ? '#F8FAFC' : '#CBD5E1', letterSpacing: '-0.03em' }}>
@@ -257,7 +257,7 @@ const Step4_Risikokalkulation: React.FC<Props> = ({ data, onChange }) => {
             </Typography>
             {vs > 0 && abs > 0 && (
               <Typography sx={{ fontSize: '0.75rem', color: '#475569', mt: 0.5 }}>
-                → Jahresnettobeitrag (Basis): <strong style={{ color: '#60A5FA' }}>{jahresnetto.toLocaleString('de-DE')} EUR</strong>
+                → Jahresnettobeitrag (Basis): <strong style={{ color: '#7BC9A0' }}>{jahresnetto.toLocaleString('de-DE')} EUR</strong>
               </Typography>
             )}
           </Box>

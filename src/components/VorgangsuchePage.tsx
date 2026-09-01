@@ -9,7 +9,7 @@ import AddIcon from '@mui/icons-material/Add';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import FactoryIcon from '@mui/icons-material/Factory';
+import hdiLogo from '../assets/hdi-logo.webp';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import type { AntragData, VorgangStatus } from '../types/antrag';
@@ -129,18 +129,18 @@ const VorgangsuchePage: React.FC<Props> = ({
     <Box sx={{ minHeight: '100vh', bgcolor: '#F1F5F9', display: 'flex', flexDirection: 'column' }}>
       {/* Top bar */}
       <Box sx={{
-        bgcolor: '#0B1426', px: { xs: 3, md: 5 }, py: 2,
+        bgcolor: '#0A1F14', px: { xs: 3, md: 5 }, py: 2,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
         position: 'sticky', top: 0, zIndex: 10,
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box sx={{ width: 36, height: 36, borderRadius: '10px', background: 'linear-gradient(135deg, #2563EB, #06B6D4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FactoryIcon sx={{ color: '#fff', fontSize: 20 }} />
+          <Box sx={{ width: 46, height: 36, borderRadius: '8px', bgcolor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 0.5, flexShrink: 0 }}>
+            <Box component="img" src={hdiLogo} alt="HDI" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </Box>
           <Box>
             <Typography sx={{ color: '#F8FAFC', fontWeight: 800, fontSize: '0.95rem', lineHeight: 1.1 }}>
-              <Box component="span" sx={{ color: '#60A5FA' }}>TARIF</Box>rechner
+              <Box component="span" sx={{ color: '#7BC9A0' }}>TARIF</Box>rechner
             </Typography>
             <Typography sx={{ color: '#334155', fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               INdustrieversicherung
@@ -263,7 +263,7 @@ const VorgangsuchePage: React.FC<Props> = ({
                   size="small"
                   sx={{
                     height: 18, fontSize: '0.65rem', fontWeight: 700,
-                    bgcolor: ansicht === v ? '#2563EB' : '#E2E8F0',
+                    bgcolor: ansicht === v ? '#00612C' : '#E2E8F0',
                     color: ansicht === v ? '#fff' : '#64748B',
                   }}
                 />
@@ -397,7 +397,7 @@ const VorgangsuchePage: React.FC<Props> = ({
                         </TableCell>
                         {ansicht === 'meine' && (
                           <TableCell sx={{ py: 2 }}>
-                            <Typography sx={{ fontSize: '0.78rem', color: grund === 'freigabe' ? '#1D4ED8' : '#94A3B8', fontWeight: grund === 'freigabe' ? 600 : 400 }}>
+                            <Typography sx={{ fontSize: '0.78rem', color: grund === 'freigabe' ? '#004A21' : '#94A3B8', fontWeight: grund === 'freigabe' ? 600 : 400 }}>
                               {grund ? GRUND_LABELS[grund] : '—'}
                             </Typography>
                           </TableCell>
@@ -405,7 +405,7 @@ const VorgangsuchePage: React.FC<Props> = ({
                         <TableCell sx={{ py: 2 }} onClick={(e) => e.stopPropagation()}>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <Tooltip title="Anzeigen">
-                              <IconButton size="small" onClick={() => onEditVorgang(v.id)} sx={{ color: '#64748B', '&:hover': { color: '#2563EB', bgcolor: '#EFF6FF' } }}>
+                              <IconButton size="small" onClick={() => onEditVorgang(v.id)} sx={{ color: '#64748B', '&:hover': { color: '#00612C', bgcolor: '#EAF5EE' } }}>
                                 <VisibilityOutlinedIcon sx={{ fontSize: 17 }} />
                               </IconButton>
                             </Tooltip>
@@ -415,7 +415,7 @@ const VorgangsuchePage: React.FC<Props> = ({
                                   size="small"
                                   disabled={!bearbeitbar}
                                   onClick={() => onEditVorgang(v.id)}
-                                  sx={{ color: '#64748B', '&:hover': { color: '#2563EB', bgcolor: '#EFF6FF' } }}
+                                  sx={{ color: '#64748B', '&:hover': { color: '#00612C', bgcolor: '#EAF5EE' } }}
                                 >
                                   <EditOutlinedIcon sx={{ fontSize: 17 }} />
                                 </IconButton>

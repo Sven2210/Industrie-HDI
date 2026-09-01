@@ -66,9 +66,9 @@ export const generateVorschlagPDF = (data: AntragData): void => {
   const col2x = MARGIN + COL / 2 + 4;
 
   const sectionTitle = (title: string, x: number, yy: number): number => {
-    setFont(9, 'bold', rgb(37, 99, 235));
+    setFont(9, 'bold', rgb(0, 97, 44));
     doc.text(title.toUpperCase(), x, yy);
-    doc.setDrawColor(37, 99, 235);
+    doc.setDrawColor(0, 97, 44);
     doc.line(x, yy + 1.5, x + COL2, yy + 1.5);
     return yy + 7;
   };
@@ -110,9 +110,9 @@ export const generateVorschlagPDF = (data: AntragData): void => {
   y += 8;
 
   // Risikokalkulation
-  setFont(9, 'bold', rgb(37, 99, 235));
+  setFont(9, 'bold', rgb(0, 97, 44));
   doc.text('RISIKOKALKULATION', MARGIN, y);
-  doc.setDrawColor(37, 99, 235);
+  doc.setDrawColor(0, 97, 44);
   doc.line(MARGIN, y + 1.5, W - MARGIN, y + 1.5);
   y += 8;
 
@@ -142,9 +142,9 @@ export const generateVorschlagPDF = (data: AntragData): void => {
   y += 8;
 
   // Beitragskalkulation
-  setFont(9, 'bold', rgb(37, 99, 235));
+  setFont(9, 'bold', rgb(0, 97, 44));
   doc.text('BEITRAGSKALKULATION', MARGIN, y);
-  doc.setDrawColor(37, 99, 235);
+  doc.setDrawColor(0, 97, 44);
   doc.line(MARGIN, y + 1.5, W - MARGIN, y + 1.5);
   y += 9;
 
@@ -206,7 +206,7 @@ export const generateVorschlagPDF = (data: AntragData): void => {
   }
 
   // Total row — align Netto/Brutto values with their columns
-  drawRect(MARGIN, y, COL, 12, rgb(37, 99, 235));
+  drawRect(MARGIN, y, COL, 12, rgb(0, 97, 44));
   setFont(8, 'bold', rgb(255, 255, 255));
   doc.text('Gesamtprämie', MARGIN + 2, y + 8);
   doc.text(totalNetto.toLocaleString('de-DE') + ' EUR', textX(3), y + 8, alignOpt(3));

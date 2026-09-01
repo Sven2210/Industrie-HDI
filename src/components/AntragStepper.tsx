@@ -7,7 +7,6 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import CloseIcon from '@mui/icons-material/Close';
-import FactoryIcon from '@mui/icons-material/Factory';
 import BusinessIcon from '@mui/icons-material/Business';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
@@ -30,6 +29,7 @@ import Step4_Risikokalkulation from './steps/Step4_Risikokalkulation';
 import Step5_Beitragskalkulation from './steps/Step5_Beitragskalkulation';
 import Step6_Zusammenfassung from './steps/Step6_Zusammenfassung';
 import UserMenu from './UserMenu';
+import hdiLogo from '../assets/hdi-logo.webp';
 
 const STEPS = [
   { label: 'Interessent', sub: 'VN & Vertriebspartner', icon: <BusinessIcon sx={{ fontSize: 15 }} /> },
@@ -150,19 +150,19 @@ const AntragStepper: React.FC<Props> = ({
       {/* Sidebar */}
       {!isMobile && (
         <Box sx={{
-          width: SIDEBAR_W, flexShrink: 0, bgcolor: '#0B1426',
+          width: SIDEBAR_W, flexShrink: 0, bgcolor: '#0A1F14',
           display: 'flex', flexDirection: 'column',
           position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 10,
         }}>
           {/* Brand */}
           <Box sx={{ px: 3, pt: 3.5, pb: 2.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ width: 34, height: 34, borderRadius: '10px', background: 'linear-gradient(135deg, #2563EB, #06B6D4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <FactoryIcon sx={{ color: '#fff', fontSize: 18 }} />
+              <Box sx={{ width: 44, height: 34, borderRadius: '8px', bgcolor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 0.5, flexShrink: 0 }}>
+                <Box component="img" src={hdiLogo} alt="HDI" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </Box>
               <Box>
                 <Typography sx={{ color: '#F8FAFC', fontWeight: 800, fontSize: '0.88rem', lineHeight: 1.1 }}>
-                  <Box component="span" sx={{ color: '#60A5FA' }}>TARIF</Box>rechner
+                  <Box component="span" sx={{ color: '#7BC9A0' }}>TARIF</Box>rechner
                 </Typography>
                 <Typography sx={{ color: '#334155', fontSize: '0.58rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   INdustrieversicherung
@@ -176,8 +176,8 @@ const AntragStepper: React.FC<Props> = ({
           {/* Vorgang info */}
           <Box sx={{ px: 3, pt: 2.5, pb: 1 }}>
             {data.vorgangsnr ? (
-              <Box sx={{ bgcolor: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', borderRadius: 1.5, px: 1.5, py: 1 }}>
-                <Typography sx={{ color: '#60A5FA', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Vorgang</Typography>
+              <Box sx={{ bgcolor: 'rgba(0, 97, 44,0.12)', border: '1px solid rgba(0, 97, 44,0.25)', borderRadius: 1.5, px: 1.5, py: 1 }}>
+                <Typography sx={{ color: '#7BC9A0', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Vorgang</Typography>
                 <Typography sx={{ color: '#F8FAFC', fontWeight: 700, fontSize: '0.82rem', mb: 1 }}>{data.vorgangsnr}</Typography>
                 <StatusMenu status={data.status} uebergaenge={statusUebergaenge} onSelect={handleStatusUebergang} />
               </Box>
@@ -200,8 +200,8 @@ const AntragStepper: React.FC<Props> = ({
                   sx={{
                     display: 'flex', alignItems: 'center', gap: 1.5,
                     px: 1.5, py: 1.25, borderRadius: 2, cursor: 'pointer', mb: 0.5,
-                    bgcolor: active ? 'rgba(37,99,235,0.15)' : 'transparent',
-                    border: '1px solid', borderColor: active ? 'rgba(37,99,235,0.3)' : 'transparent',
+                    bgcolor: active ? 'rgba(0, 97, 44,0.15)' : 'transparent',
+                    border: '1px solid', borderColor: active ? 'rgba(0, 97, 44,0.3)' : 'transparent',
                     transition: 'all 0.15s', position: 'relative',
                     '&:hover': !active ? { bgcolor: 'rgba(255,255,255,0.04)' } : {},
                   }}>
@@ -209,9 +209,9 @@ const AntragStepper: React.FC<Props> = ({
                     width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '0.68rem', fontWeight: 700,
-                    bgcolor: active ? '#2563EB' : 'rgba(255,255,255,0.06)',
+                    bgcolor: active ? '#00612C' : 'rgba(255,255,255,0.06)',
                     color: active ? 'white' : '#475569',
-                    boxShadow: active ? '0 0 0 4px rgba(37,99,235,0.2)' : 'none',
+                    boxShadow: active ? '0 0 0 4px rgba(0, 97, 44,0.2)' : 'none',
                     transition: 'all 0.2s',
                   }}>
                     {idx + 1}
@@ -220,11 +220,11 @@ const AntragStepper: React.FC<Props> = ({
                     <Typography sx={{ fontSize: '0.78rem', fontWeight: active ? 700 : 500, color: active ? '#F8FAFC' : '#475569', lineHeight: 1.2 }}>
                       {s.label}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.62rem', color: active ? '#60A5FA' : '#334155', mt: 0.1 }}>
+                    <Typography sx={{ fontSize: '0.62rem', color: active ? '#7BC9A0' : '#334155', mt: 0.1 }}>
                       {s.sub}
                     </Typography>
                   </Box>
-                  {active && <Box sx={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: 18, borderRadius: '0 2px 2px 0', bgcolor: '#2563EB' }} />}
+                  {active && <Box sx={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: 18, borderRadius: '0 2px 2px 0', bgcolor: '#00612C' }} />}
                 </Box>
               );
             })}
@@ -235,10 +235,10 @@ const AntragStepper: React.FC<Props> = ({
             <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', mb: 2.5 }} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
               <Typography sx={{ color: '#475569', fontSize: '0.68rem', fontWeight: 600 }}>Fortschritt</Typography>
-              <Typography sx={{ color: '#2563EB', fontSize: '0.68rem', fontWeight: 700 }}>{progress}%</Typography>
+              <Typography sx={{ color: '#00612C', fontSize: '0.68rem', fontWeight: 700 }}>{progress}%</Typography>
             </Box>
             <Box sx={{ height: 4, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-              <Box sx={{ height: '100%', width: `${progress}%`, borderRadius: 2, background: 'linear-gradient(90deg, #2563EB, #06B6D4)', transition: 'width 0.4s ease' }} />
+              <Box sx={{ height: '100%', width: `${progress}%`, borderRadius: 2, background: 'linear-gradient(90deg, #00612C, #3D8B5F)', transition: 'width 0.4s ease' }} />
             </Box>
           </Box>
         </Box>
@@ -256,13 +256,13 @@ const AntragStepper: React.FC<Props> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             {isMobile && (
               <>
-                <Typography sx={{ fontWeight: 800, fontSize: '0.9rem', color: '#0B1426', mr: 1 }}>
-                  <Box component="span" sx={{ color: '#2563EB' }}>TARIF</Box>rechner
+                <Typography sx={{ fontWeight: 800, fontSize: '0.9rem', color: '#0A1F14', mr: 1 }}>
+                  <Box component="span" sx={{ color: '#00612C' }}>TARIF</Box>rechner
                 </Typography>
                 <StatusMenu status={data.status} uebergaenge={statusUebergaenge} onSelect={handleStatusUebergang} />
               </>
             )}
-            <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: step === STEPS.length - 1 ? '#10B981' : '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: step === STEPS.length - 1 ? 'white' : '#2563EB' }}>
+            <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: step === STEPS.length - 1 ? '#10B981' : '#EAF5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', color: step === STEPS.length - 1 ? 'white' : '#00612C' }}>
               {React.cloneElement(STEPS[step].icon as React.ReactElement<{ sx: object }>, { sx: { fontSize: 14 } })}
             </Box>
             <Box>
@@ -273,14 +273,14 @@ const AntragStepper: React.FC<Props> = ({
             </Box>
           </Box>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <Chip label={`${step + 1} / ${STEPS.length}`} size="small" sx={{ bgcolor: '#EFF6FF', color: '#2563EB', fontWeight: 700, fontSize: '0.7rem', border: '1px solid #DBEAFE', mr: 1 }} />
+            <Chip label={`${step + 1} / ${STEPS.length}`} size="small" sx={{ bgcolor: '#EAF5EE', color: '#00612C', fontWeight: 700, fontSize: '0.7rem', border: '1px solid #D6EAE0', mr: 1 }} />
             <UserMenu currentUser={currentUser} users={users} onSwitchUser={onSwitchUser} onLogout={onLogout} onShowUebersicht={onShowUebersicht} />
           </Box>
         </Box>
 
         {/* Progress bar */}
         <Box sx={{ height: 3, bgcolor: '#E2E8F0' }}>
-          <Box sx={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #2563EB, #06B6D4)', transition: 'width 0.3s ease' }} />
+          <Box sx={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #00612C, #3D8B5F)', transition: 'width 0.3s ease' }} />
         </Box>
 
         {/* Read-only Hinweis */}
@@ -329,7 +329,7 @@ const AntragStepper: React.FC<Props> = ({
             {STEPS.map((_, idx) => (
               <Box key={idx} onClick={() => goTo(idx)} sx={{
                 width: idx === step ? 18 : 6, height: 6, borderRadius: 3, cursor: 'pointer',
-                bgcolor: idx === step ? '#2563EB' : '#E2E8F0',
+                bgcolor: idx === step ? '#00612C' : '#E2E8F0',
                 transition: 'all 0.25s',
               }} />
             ))}

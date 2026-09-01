@@ -17,9 +17,9 @@ const SectionCard: React.FC<SectionCardProps> = ({ icon, title, subtitle, childr
       borderRadius: 3,
       bgcolor: '#FFFFFF',
       border: '1px solid',
-      borderColor: accent ? '#DBEAFE' : '#F1F5F9',
+      borderColor: accent ? '#D6EAE0' : '#F1F5F9',
       boxShadow: accent
-        ? '0 2px 16px rgba(37,99,235,0.08)'
+        ? '0 2px 16px rgba(0, 97, 44,0.08)'
         : '0 1px 4px rgba(15,23,42,0.05)',
     }}
   >
@@ -30,7 +30,7 @@ const SectionCard: React.FC<SectionCardProps> = ({ icon, title, subtitle, childr
           height: 34,
           borderRadius: 2,
           background: accent
-            ? 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)'
+            ? 'linear-gradient(135deg, #00612C 0%, #004A21 100%)'
             : '#F8FAFC',
           border: accent ? 'none' : '1px solid #E2E8F0',
           display: 'flex',
