@@ -40,6 +40,14 @@ function StandortKarte({ lat, lon }: { lat: number; lon: number }) {
 
 const REGELWERK_LABELS: Record<Regelwerk, string> = {
   betriebshaftpflicht: 'Betriebshaftpflicht',
+  itPolice: 'IT-Police',
+  umwelthaftpflichtV: 'UmwelthaftpflichtV',
+  umweltschadenV: 'UmweltschadenV',
+  speditionen: 'Speditionen',
+  verpackungsunternehmen: 'Verpackungsunternehmen',
+  kfzRueckruf: 'KFZ-Rückruf',
+  medizinprodukteAmg: 'Medizinprodukte/AMG',
+  architektenIngenieure: 'Architekten/Ingenieure',
 };
 
 const STUFE_CONFIG: Record<BhvRisikoStufe, { color: string; bg: string; border: string; label: string }> = {
@@ -819,27 +827,36 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
         )}
       </Box>
 
-      {/* Analyse starten */}
-      <Box sx={{ mb: 3 }}>
-        <Button
-          variant="contained"
-          startIcon={<FactCheckOutlinedIcon />}
-          onClick={handleAnalyseStarten}
-          disabled={dokumente.length === 0 || pruefeLaeuft || schonAnalysiert}
-        >
-          {pruefeLaeuft ? 'Prüfung läuft …' : 'Analyse starten'}
-        </Button>
-        {dokumente.length === 0 && (
-          <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8', mt: 1 }}>
-            Bitte mindestens ein Dokument hochladen.
-          </Typography>
-        )}
-        {schonAnalysiert && (
-          <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8', mt: 1 }}>
-            Bereits analysiert. Laden Sie ein weiteres Dokument hoch, um die Analyse erneut zu starten.
-          </Typography>
-        )}
-      </Box>
+      {/* Analyse starten — die automatische Kategorien-Analyse gibt es bislang nur für das
+          Betriebshaftpflicht-Regelwerk; bei den übrigen Regelwerken bleibt es bei manueller
+          Prüfung der hochgeladenen Dokumente. */}
+      {regelwerk === 'betriebshaftpflicht' ? (
+        <Box sx={{ mb: 3 }}>
+          <Button
+            variant="contained"
+            startIcon={<FactCheckOutlinedIcon />}
+            onClick={handleAnalyseStarten}
+            disabled={dokumente.length === 0 || pruefeLaeuft || schonAnalysiert}
+          >
+            {pruefeLaeuft ? 'Prüfung läuft …' : 'Analyse starten'}
+          </Button>
+          {dokumente.length === 0 && (
+            <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8', mt: 1 }}>
+              Bitte mindestens ein Dokument hochladen.
+            </Typography>
+          )}
+          {schonAnalysiert && (
+            <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8', mt: 1 }}>
+              Bereits analysiert. Laden Sie ein weiteres Dokument hoch, um die Analyse erneut zu starten.
+            </Typography>
+          )}
+        </Box>
+      ) : (
+        <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8', mb: 3 }}>
+          Für das Regelwerk „{REGELWERK_LABELS[regelwerk]}" steht noch keine automatische
+          Kategorien-Analyse zur Verfügung — bitte die hochgeladenen Dokumente manuell prüfen.
+        </Typography>
+      )}
 
       {/* 1. Versicherungsnehmer — Live-Spiegel aus Reiter 4 */}
       <Box sx={{ mb: 2 }}>

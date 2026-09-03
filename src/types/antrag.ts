@@ -86,7 +86,16 @@ export interface HochgeladenesDokument {
   hochgeladenAm: string;
 }
 
-export type Regelwerk = 'betriebshaftpflicht';
+export type Regelwerk =
+  | 'betriebshaftpflicht'
+  | 'itPolice'
+  | 'umwelthaftpflichtV'
+  | 'umweltschadenV'
+  | 'speditionen'
+  | 'verpackungsunternehmen'
+  | 'kfzRueckruf'
+  | 'medizinprodukteAmg'
+  | 'architektenIngenieure';
 
 export type BhvRisikoStufe = 'niedrig' | 'mittel' | 'hoch' | 'unbeantwortet';
 
