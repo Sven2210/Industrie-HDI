@@ -19,10 +19,10 @@ async function geocode(adresse: Wagnisanschrift): Promise<{ lat: number; lon: nu
   const q = encodeURIComponent(
     `${adresse.strasse} ${adresse.hausnummer}, ${adresse.plz} ${adresse.ort}, ${adresse.land}`
   );
-  const res = await fetchMitTimeout(
-    `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`,
-    { headers: { 'Accept-Language': 'de', 'User-Agent': 'IndustrieRisikoApp/1.0' } }
-  );
+  // Läuft über den Server-Proxy statt direkt gegen Nominatim: Browser verbieten das Setzen
+  // eines eigenen User-Agent-Headers (Sicherheitsvorgabe), Nominatims Nutzungsrichtlinie
+  // verlangt aber genau das — ohne Proxy drohen Drosselung/Blockaden von Cloud-Hosting-IPs.
+  const res = await fetchMitTimeout(`/proxy/nominatim/search?q=${q}&format=json&limit=1`);
   const data = await res.json();
   if (!data.length) throw new Error('Adresse nicht gefunden');
   return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
@@ -135,7 +135,10 @@ async function analysiereKlima(lat: number, lon: number): Promise<{ sturm: Natur
 // ── Hochwasser + Waldbrand (zwei parallele count-Queries) ─────────────────────
 
 async function overpassCount(query: string): Promise<number> {
-  const res = await fetchMitTimeout('https://overpass-api.de/api/interpreter', {
+  // Läuft über den Server-Proxy: overpass-api.de liefert nicht zuverlässig einen
+  // Access-Control-Allow-Origin-Header, direkte Browser-Aufrufe schlagen daher je nach
+  // angesprochenem Lastverteiler-Knoten mit einem CORS-Fehler fehl.
+  const res = await fetchMitTimeout('/proxy/overpass/api/interpreter', {
     method: 'POST',
     body: new URLSearchParams({ data: query }),
   });

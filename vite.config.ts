@@ -4,6 +4,15 @@ import tailwindcss from '@tailwindcss/vite';
 import type { Plugin } from 'vite';
 import type { IncomingMessage, ServerResponse } from 'http';
 
+function liesRohenBody(req: IncomingMessage): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
 function fetchProxy(prefix: string, target: string, extraHeaders?: Record<string, string>): Plugin {
   return {
     name: `proxy-${prefix.replace(/\//g, '-')}`,
@@ -11,12 +20,17 @@ function fetchProxy(prefix: string, target: string, extraHeaders?: Record<string
       server.middlewares.use(prefix, async (req: IncomingMessage, res: ServerResponse) => {
         const url = `${target}${req.url ?? ''}`;
         try {
+          const hatBody = req.method !== 'GET' && req.method !== 'HEAD';
+          const body = hatBody ? await liesRohenBody(req) : undefined;
           const upstream = await fetch(url, {
+            method: req.method ?? 'GET',
             redirect: 'follow',
             headers: {
               'User-Agent': 'Mozilla/5.0 (compatible; IndustrieRisikoApp/1.0)',
+              ...(hatBody && req.headers['content-type'] ? { 'Content-Type': req.headers['content-type'] } : {}),
               ...extraHeaders,
             },
+            body,
           });
           const buffer = await upstream.arrayBuffer();
           res.statusCode = upstream.status;
@@ -47,6 +61,20 @@ export default defineConfig({
     // Bundesanzeiger
     fetchProxy('/proxy/bundesanzeiger', 'https://www.bundesanzeiger.de', {
       Accept: 'text/html,application/xhtml+xml',
+    }),
+    // Nominatim (Geocoding) — läuft serverseitig statt im Browser: Nominatims
+    // Nutzungsrichtlinie verlangt einen aussagekräftigen User-Agent, den Browser-Fetch aus
+    // Sicherheitsgründen aber nie tatsächlich setzen (verbotener Header).
+    fetchProxy('/proxy/nominatim', 'https://nominatim.openstreetmap.org', {
+      'Accept-Language': 'de',
+    }),
+    // Overpass (OSM-Landnutzungsdaten für Hochwasser/Waldbrand) — overpass-api.de liefert
+    // nicht zuverlässig einen Access-Control-Allow-Origin-Header, direkte Browser-Aufrufe
+    // schlagen daher je nach Lastverteiler-Knoten mit einem CORS-Fehler fehl. Wichtig: der
+    // User-Agent darf NICHT "Mozilla" enthalten — overpass-api.de blockt das serverseitig
+    // mit 406/429 (mit curl verifiziert), vermutlich um Browser-Impersonation zu unterbinden.
+    fetchProxy('/proxy/overpass', 'https://overpass-api.de', {
+      'User-Agent': 'IndustrieRisikoApp/1.0',
     }),
   ],
 });
