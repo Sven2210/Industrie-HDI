@@ -14,6 +14,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { AntragData, BhvRisikoStufe, BhvKategorieErgebnis, ManuelleRisikoUeberschreibung, HochgeladenesDokument, Regelwerk, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag, FreigabeErteiltEintrag, FreigabeAbgelehntEintrag } from '../../types/antrag';
 import type { AppUser } from '../../types/user';
 import { analysiereBhvFragebogen, berechneGesamteinschaetzung } from '../../utils/bhvAnalyse';
+import type { BhvGesamteinschaetzung } from '../../utils/bhvAnalyse';
 import { findeDokumentHinweise } from '../../utils/dokumentHinweise';
 import { pruefeSanktionen } from '../../utils/sanktionsAnalyse';
 import { analysiereRisiko } from '../../utils/risikoAnalyse';
@@ -194,6 +195,111 @@ function KategorieZeile({ index, kategorie, ueberschreibung, onUeberschreiben }:
             </Typography>
           )}
         </Box>
+      )}
+    </Box>
+  );
+}
+
+interface GesamteinschaetzungBoxProps {
+  automatisch: BhvGesamteinschaetzung;
+  ueberschreibung?: ManuelleRisikoUeberschreibung;
+  onUeberschreiben: (stufe: BhvRisikoStufe, kommentar: string) => void;
+}
+
+function GesamteinschaetzungBox({ automatisch, ueberschreibung, onUeberschreiben }: GesamteinschaetzungBoxProps) {
+  const [bearbeiten, setBearbeiten] = useState(false);
+  const [stufe, setStufe] = useState<BhvRisikoStufe>(ueberschreibung?.stufe ?? automatisch.stufe);
+  const [kommentar, setKommentar] = useState('');
+
+  const anzeigeStufe = ueberschreibung?.stufe ?? automatisch.stufe;
+
+  const handleBearbeitenStarten = () => {
+    setStufe(ueberschreibung?.stufe ?? automatisch.stufe);
+    setKommentar('');
+    setBearbeiten(true);
+  };
+
+  const handleSpeichern = () => {
+    if (!kommentar.trim()) return;
+    onUeberschreiben(stufe, kommentar.trim());
+    setBearbeiten(false);
+    setKommentar('');
+  };
+
+  return (
+    <Box sx={{
+      mt: 3, p: 2.5, bgcolor: STUFE_CONFIG[anzeigeStufe].bg,
+      border: `1.5px solid ${STUFE_CONFIG[anzeigeStufe].border}`, borderRadius: 2.5,
+    }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: STUFE_CONFIG[anzeigeStufe].color, flexShrink: 0 }} />
+          <Box>
+            <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Gesamteinschätzung (Kategorien 2–12)
+            </Typography>
+            <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: STUFE_CONFIG[anzeigeStufe].color }}>
+              {STUFE_CONFIG[anzeigeStufe].label}
+            </Typography>
+          </Box>
+        </Box>
+        {!bearbeiten && (
+          <Tooltip title="Gesamteinschätzung manuell anpassen">
+            <IconButton size="small" onClick={handleBearbeitenStarten} sx={{ color: '#94A3B8', '&:hover': { color: '#0F172A' } }}>
+              <EditOutlinedIcon sx={{ fontSize: 15 }} />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+
+      {bearbeiten ? (
+        <Box sx={{ p: 1.5, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Select
+            size="small"
+            fullWidth
+            value={stufe}
+            onChange={(e) => setStufe(e.target.value as BhvRisikoStufe)}
+            sx={{ bgcolor: '#fff', fontSize: '0.82rem' }}
+          >
+            {STUFE_OPTIONEN.filter((s) => s !== 'unbeantwortet').map((s) => (
+              <MenuItem key={s} value={s}>{STUFE_CONFIG[s].label}</MenuItem>
+            ))}
+          </Select>
+          <TextField
+            size="small"
+            fullWidth
+            multiline
+            minRows={2}
+            placeholder="Kommentar (Pflichtfeld) — Begründung für die manuelle Änderung"
+            value={kommentar}
+            onChange={(e) => setKommentar(e.target.value)}
+            sx={{ bgcolor: '#fff' }}
+          />
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="contained" size="small" disabled={!kommentar.trim()} onClick={handleSpeichern}>
+              Speichern
+            </Button>
+            <Button variant="outlined" size="small" onClick={() => setBearbeiten(false)}>
+              Abbrechen
+            </Button>
+          </Box>
+        </Box>
+      ) : (
+        <>
+          <Typography sx={{ fontSize: '0.82rem', color: '#1E293B', lineHeight: 1.6 }}>
+            {ueberschreibung ? ueberschreibung.kommentar : automatisch.empfehlung}
+          </Typography>
+          {ueberschreibung && (
+            <>
+              <Typography sx={{ fontSize: '0.7rem', color: '#94A3B8', mt: 0.75, fontStyle: 'italic' }}>
+                Automatische Einschätzung: {automatisch.empfehlung} ({STUFE_CONFIG[automatisch.stufe].label})
+              </Typography>
+              <Typography sx={{ fontSize: '0.7rem', color: '#94A3B8', mt: 1, pt: 1, borderTop: '1px solid rgba(15,23,42,0.08)' }}>
+                Manuell geändert von <strong>{ueberschreibung.erstelltVonName}</strong> am {formatDatum(ueberschreibung.erstelltAm)}
+              </Typography>
+            </>
+          )}
+        </>
       )}
     </Box>
   );
@@ -548,7 +654,8 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
     const ueberschreibung = manuelleUeberschreibungen.find((u) => u.kategorieId === k.id);
     return ueberschreibung ? { ...k, stufe: ueberschreibung.stufe } : k;
   });
-  const gesamteinschaetzung = bhvErgebnis ? berechneGesamteinschaetzung(effektiveKategorien) : null;
+  const automatischeGesamteinschaetzung = bhvErgebnis ? berechneGesamteinschaetzung(effektiveKategorien) : null;
+  const gesamtUeberschreibung = analyse.manuelleGesamtUeberschreibung;
 
   const handleRegelwerkAendern = (wert: Regelwerk) => {
     onChange({ analyse: { ...analyse, regelwerk: wert } });
@@ -569,6 +676,18 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
         manuelleUeberschreibungen: [...manuelleUeberschreibungen.filter((u) => u.kategorieId !== kategorieId), eintrag],
       },
     });
+  };
+
+  const handleGesamtUeberschreiben = (stufe: BhvRisikoStufe, kommentar: string) => {
+    const eintrag: ManuelleRisikoUeberschreibung = {
+      kategorieId: 'gesamt',
+      stufe,
+      kommentar,
+      erstelltVonId: currentUser.id,
+      erstelltVonName: `${currentUser.vorname} ${currentUser.nachname}`,
+      erstelltAm: new Date().toISOString(),
+    };
+    onChange({ analyse: { ...analyse, manuelleGesamtUeberschreibung: eintrag } });
   };
 
   const sanktionsAnalyse = data.sanktionsAnalyse;
@@ -868,26 +987,12 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
             />
           ))}
 
-          {gesamteinschaetzung && (
-            <Box sx={{
-              mt: 3, p: 2.5, bgcolor: STUFE_CONFIG[gesamteinschaetzung.stufe].bg,
-              border: `1.5px solid ${STUFE_CONFIG[gesamteinschaetzung.stufe].border}`, borderRadius: 2.5,
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-                <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: STUFE_CONFIG[gesamteinschaetzung.stufe].color, flexShrink: 0 }} />
-                <Box>
-                  <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Gesamteinschätzung (Kategorien 2–12)
-                  </Typography>
-                  <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: STUFE_CONFIG[gesamteinschaetzung.stufe].color }}>
-                    {STUFE_CONFIG[gesamteinschaetzung.stufe].label}
-                  </Typography>
-                </Box>
-              </Box>
-              <Typography sx={{ fontSize: '0.82rem', color: '#1E293B', lineHeight: 1.6 }}>
-                {gesamteinschaetzung.empfehlung}
-              </Typography>
-            </Box>
+          {automatischeGesamteinschaetzung && (
+            <GesamteinschaetzungBox
+              automatisch={automatischeGesamteinschaetzung}
+              ueberschreibung={gesamtUeberschreibung}
+              onUeberschreiben={handleGesamtUeberschreiben}
+            />
           )}
         </Box>
       )}

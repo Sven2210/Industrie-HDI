@@ -130,6 +130,9 @@ export interface AnalyseDaten {
   hinweise?: DokumentHinweis[];
   bhvErgebnis?: BhvAnalyseErgebnis;
   manuelleUeberschreibungen?: ManuelleRisikoUeberschreibung[];
+  // Analog zu manuelleUeberschreibungen, aber für die Gesamteinschätzung (Kategorien 2–12)
+  // statt für eine einzelne Kategorie — kategorieId ist hier ungenutzt.
+  manuelleGesamtUeberschreibung?: ManuelleRisikoUeberschreibung;
 }
 
 export type Sparte = 'Haftpflicht' | 'Transport' | 'Technische Versicherung';
