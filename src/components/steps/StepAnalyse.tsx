@@ -6,7 +6,6 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
 import GavelIcon from '@mui/icons-material/Gavel';
 import PublicIcon from '@mui/icons-material/Public';
-import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined';
 import ForwardToInboxOutlinedIcon from '@mui/icons-material/ForwardToInboxOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
@@ -42,23 +41,6 @@ function StandortKarte({ lat, lon }: { lat: number; lon: number }) {
 
 const REGELWERK_LABELS: Record<Regelwerk, string> = {
   betriebshaftpflicht: 'Betriebshaftpflicht',
-};
-
-const NATURGEFAHR_LABELS: Record<string, string> = {
-  hochwasser: 'Hochwasser / Überschwemmung',
-  sturm: 'Sturm / Orkan',
-  erdbeben: 'Erdbeben',
-  hagel: 'Hagel',
-  waldbrand: 'Waldbrand',
-  schnee: 'Schnee- / Eislast',
-};
-
-const UMWELTRISIKO_LABELS: Record<string, string> = {
-  luftemissionen: 'Luftemissionen',
-  gewaesserBoden: 'Gewässer- und Bodenkontamination',
-  abfall: 'Abfall- und Sondermüllaufkommen',
-  laerm: 'Lärmemissionen',
-  brandExplosion: 'Brand- und Explosionsrisiko',
 };
 
 const STUFE_CONFIG: Record<BhvRisikoStufe, { color: string; bg: string; border: string; label: string }> = {
@@ -639,7 +621,6 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
   const analyse = data.analyse ?? { dokumente: [] };
   const dokumente = analyse.dokumente;
   const bhvErgebnis = analyse.bhvErgebnis;
-  const hinweise = analyse.hinweise ?? [];
   // Die Analyse wertet stets nur das zuletzt hochgeladene Dokument aus (siehe
   // handleAnalyseStarten) — solange dieses mit dem zuletzt analysierten übereinstimmt, gibt es
   // nichts Neues auszuwerten und der Button bleibt ausgegraut.
@@ -1004,38 +985,6 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
       )}
 
       <WorkflowSektion data={data} onChange={onWorkflowChange} currentUser={currentUser} users={users} />
-
-      {/* Hinweise auf Naturgefahren/Umweltrisiken aus Dokumenten (für Reiter 4) */}
-      {bhvErgebnis && hinweise.length > 0 && (
-        <Box sx={{ mt: 2.5, p: 3, bgcolor: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 2.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-            <WarningAmberOutlinedIcon sx={{ fontSize: 18, color: '#C2410C' }} />
-            <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#9A3412' }}>
-              Hinweise aus Dokumenten erkannt
-            </Typography>
-          </Box>
-          <Typography sx={{ fontSize: '0.78rem', color: '#9A3412', mb: 2 }}>
-            Diese Hinweise wurden in den hochgeladenen Dokumenten gefunden und automatisch in Reiter 4
-            (Risikocheck) unter "Naturgefahren am Standort" bzw. "Umweltrisiko durch Geschäftstätigkeit"
-            übernommen — inklusive Quellenangabe.
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {hinweise.map((h, i) => (
-              <Box key={i} sx={{ p: 1.5, bgcolor: '#fff', border: '1px solid #FED7AA', borderRadius: 2 }}>
-                <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: '#0F172A' }}>
-                  {h.bereich === 'naturgefahr' ? NATURGEFAHR_LABELS[h.kategorie] : UMWELTRISIKO_LABELS[h.kategorie]}
-                </Typography>
-                <Typography sx={{ fontSize: '0.78rem', color: '#64748B', fontStyle: 'italic', mt: 0.25 }}>
-                  „{h.ausschnitt}"
-                </Typography>
-                <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8', mt: 0.5 }}>
-                  Quelle: {h.quelle}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      )}
     </Box>
   );
 };
