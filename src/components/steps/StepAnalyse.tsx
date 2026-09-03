@@ -4,7 +4,6 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
-import GavelIcon from '@mui/icons-material/Gavel';
 import PublicIcon from '@mui/icons-material/Public';
 import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined';
 import ForwardToInboxOutlinedIcon from '@mui/icons-material/ForwardToInboxOutlined';
@@ -15,9 +14,9 @@ import type { AppUser } from '../../types/user';
 import { analysiereBhvFragebogen, berechneGesamteinschaetzung } from '../../utils/bhvAnalyse';
 import type { BhvGesamteinschaetzung } from '../../utils/bhvAnalyse';
 import { findeDokumentHinweise } from '../../utils/dokumentHinweise';
-import { pruefeSanktionen } from '../../utils/sanktionsAnalyse';
 import { analysiereRisiko } from '../../utils/risikoAnalyse';
 import { istEigenerVorgang } from '../../utils/berechtigung';
+import SanktionsPruefPanel from '../SanktionsPruefPanel';
 
 function istAdresseVollstaendig(wa: AntragData['wagnisanschrift']): boolean {
   return !!(wa.strasse && wa.hausnummer && wa.plz && wa.ort && wa.land);
@@ -613,8 +612,6 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hochladen, setHochladen] = useState(false);
   const [pruefeLaeuft, setPruefeLaeuft] = useState(false);
-  const [sanktionenLaufen, setSanktionenLaufen] = useState(false);
-  const [sanktionenFehler, setSanktionenFehler] = useState<string | null>(null);
   const [risikoLaeuft, setRisikoLaeuft] = useState(false);
   const [risikoFehler, setRisikoFehler] = useState<string | null>(null);
 
@@ -671,53 +668,16 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
     onChange({ analyse: { ...analyse, manuelleGesamtUeberschreibung: eintrag } });
   };
 
-  const sanktionsAnalyse = data.sanktionsAnalyse;
   const risikoAnalyse = data.risikoAnalyse;
 
-  const { interessent, wagnisanschrift } = data;
-  const firmaName = interessent.name.trim();
-  const ansprechpartner = interessent.ansprechpartner;
-  const sanktionenBereit = firmaName.length >= 3;
+  const { wagnisanschrift } = data;
   const adresseVollstaendig = istAdresseVollstaendig(wagnisanschrift);
-  const sanktionsKey = JSON.stringify([firmaName, ansprechpartner.vorname, ansprechpartner.name]);
   const adresseKey = JSON.stringify([wagnisanschrift.strasse, wagnisanschrift.hausnummer, wagnisanschrift.plz, wagnisanschrift.ort, wagnisanschrift.land]);
   // Bei erneutem Mounten (z.B. Tab-Wechsel) nicht sofort neu abfragen, wenn für die
   // aktuellen Eingaben bereits ein Ergebnis vorliegt — sonst würde jeder Tab-Wechsel
-  // eine überflüssige Neuabfrage der externen APIs auslösen.
-  const letzterSanktionsKeyRef = useRef<string>(sanktionsAnalyse ? sanktionsKey : '');
+  // eine überflüssige Neuabfrage der externen APIs auslösen. Die Sanktionsprüfung läuft
+  // nicht mehr hier, sondern im gemeinsam mit Reiter 4 genutzten SanktionsPruefPanel.
   const letzteAdresseRef = useRef<string>(risikoAnalyse ? adresseKey : '');
-
-  // Sanktionsprüfung und Standortrisikoanalyse sollen unabhängig davon vorliegen,
-  // ob Reiter 4 bereits besucht wurde — daher hier dieselbe Trigger-Logik wie in
-  // SanktionsPruefPanel/RisikoAnalysePanel, statt nur den bestehenden Stand zu spiegeln.
-  useEffect(() => {
-    if (!sanktionenBereit) return;
-    const key = JSON.stringify([firmaName, ansprechpartner.vorname, ansprechpartner.name]);
-    if (key === letzterSanktionsKeyRef.current) return;
-
-    setSanktionenLaufen(true);
-    setSanktionenFehler(null);
-    let aborted = false;
-
-    const debounce = setTimeout(() => {
-      letzterSanktionsKeyRef.current = key;
-      pruefeSanktionen(firmaName, [ansprechpartner])
-        .then((result) => { if (!aborted) onChange({ sanktionsAnalyse: result }); })
-        .catch((e: Error) => {
-          if (!aborted) {
-            letzterSanktionsKeyRef.current = '';
-            setSanktionenFehler(e.message ?? 'Prüfung fehlgeschlagen');
-          }
-        })
-        .finally(() => { if (!aborted) setSanktionenLaufen(false); });
-    }, 800);
-
-    return () => {
-      clearTimeout(debounce);
-      aborted = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firmaName, ansprechpartner.vorname, ansprechpartner.name]);
 
   useEffect(() => {
     if (!adresseVollstaendig) return;
@@ -888,33 +848,10 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Box sx={{ p: 1.5, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <GavelIcon sx={{ fontSize: 17, color: '#64748B' }} />
-              <Box sx={{ flex: 1 }}>
-                <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>Sanktionsprüfung</Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: '#64748B' }}>
-                  {sanktionenLaufen
-                    ? 'UN Security Council Consolidated List wird abgefragt …'
-                    : sanktionsAnalyse
-                      ? `Geprüft am ${new Date(sanktionsAnalyse.geprueftAm).toLocaleDateString('de-DE')}`
-                      : sanktionenBereit
-                        ? (sanktionenFehler ? `Fehler: ${sanktionenFehler}` : 'Prüfung wird gestartet …')
-                        : 'Bitte Firmenname auf Reiter 1 eintragen'}
-                </Typography>
-              </Box>
-              {sanktionenLaufen && <CircularProgress size={16} />}
-              {!sanktionenLaufen && sanktionsAnalyse && (
-                <Chip
-                  label={sanktionsAnalyse.ampel === 'rot' ? 'Sanktionstreffer' : sanktionsAnalyse.ampel === 'gruen' ? 'Keine Treffer' : 'Unvollständig'}
-                  size="small"
-                  sx={{
-                    fontWeight: 700, fontSize: '0.68rem',
-                    bgcolor: sanktionsAnalyse.ampel === 'rot' ? '#FEF2F2' : sanktionsAnalyse.ampel === 'gruen' ? '#F0FDF4' : '#F8FAFC',
-                    color: sanktionsAnalyse.ampel === 'rot' ? '#DC2626' : sanktionsAnalyse.ampel === 'gruen' ? '#15803D' : '#64748B',
-                  }}
-                />
-              )}
-            </Box>
+            <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A', mb: 1.5 }}>
+              Sanktionsprüfung
+            </Typography>
+            <SanktionsPruefPanel data={data} onChange={onChange} />
           </Box>
           <Box sx={{ p: 1.5, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
