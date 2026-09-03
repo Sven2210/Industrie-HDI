@@ -534,6 +534,12 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
   const dokumente = analyse.dokumente;
   const bhvErgebnis = analyse.bhvErgebnis;
   const hinweise = analyse.hinweise ?? [];
+  // Die Analyse wertet stets nur das zuletzt hochgeladene Dokument aus (siehe
+  // handleAnalyseStarten) — solange dieses mit dem zuletzt analysierten übereinstimmt, gibt es
+  // nichts Neues auszuwerten und der Button bleibt ausgegraut.
+  const schonAnalysiert = Boolean(
+    bhvErgebnis && dokumente.length > 0 && bhvErgebnis.dokumentId === dokumente[dokumente.length - 1].id
+  );
   const regelwerk: Regelwerk = analyse.regelwerk ?? 'betriebshaftpflicht';
   const manuelleUeberschreibungen = analyse.manuelleUeberschreibungen ?? [];
   // Für die Gesamteinschätzung zählt die aktuell gültige Stufe je Kategorie —
@@ -760,13 +766,18 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
           variant="contained"
           startIcon={<FactCheckOutlinedIcon />}
           onClick={handleAnalyseStarten}
-          disabled={dokumente.length === 0 || pruefeLaeuft}
+          disabled={dokumente.length === 0 || pruefeLaeuft || schonAnalysiert}
         >
           {pruefeLaeuft ? 'Prüfung läuft …' : 'Analyse starten'}
         </Button>
         {dokumente.length === 0 && (
           <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8', mt: 1 }}>
             Bitte mindestens ein Dokument hochladen.
+          </Typography>
+        )}
+        {schonAnalysiert && (
+          <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8', mt: 1 }}>
+            Bereits analysiert. Laden Sie ein weiteres Dokument hoch, um die Analyse erneut zu starten.
           </Typography>
         )}
       </Box>
