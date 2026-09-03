@@ -812,8 +812,7 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
   return (
     <Box>
       <Typography sx={{ color: '#64748B', fontSize: '0.85rem', mb: 3 }}>
-        Laden Sie den ausgefüllten Kurzfragebogen zum Betriebs- und Produkthaftpflichtrisiko hoch.
-        Nach der Analyse wird zu jeder Kategorie eine Risikoeinschätzung angezeigt.
+        Bitte laden Sie ein Dokument zur Prüfung hoch.
       </Typography>
 
       {/* Regelwerk & Dokumente */}
