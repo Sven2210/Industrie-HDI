@@ -14,9 +14,13 @@ const AMPEL_CONFIG: Record<RisikoAmpel, { color: string; bg: string; border: str
 interface Props {
   data: AntragData;
   onChange: (patch: Partial<AntragData>) => void;
+  // Reiter 4 (Risikocheck) soll die Prüfung weiterhin automatisch anstoßen; auf Reiter 3
+  // (Analyse) läuft sie stattdessen nur noch, wenn dort auf "Analyse starten" geklickt wird —
+  // dort ist autoPruefen daher false, und dieses Panel zeigt nur noch das Ergebnis an.
+  autoPruefen?: boolean;
 }
 
-const SanktionsPruefPanel: React.FC<Props> = ({ data, onChange }) => {
+const SanktionsPruefPanel: React.FC<Props> = ({ data, onChange, autoPruefen = true }) => {
   const [loading, setLoading] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);
 
@@ -32,6 +36,7 @@ const SanktionsPruefPanel: React.FC<Props> = ({ data, onChange }) => {
   const lastKeyRef = useRef<string>(analyse ? pruefobjektKey : '');
 
   useEffect(() => {
+    if (!autoPruefen) return;
     if (!istBereit) return;
     if (pruefobjektKey === lastKeyRef.current) return;
 
@@ -57,7 +62,7 @@ const SanktionsPruefPanel: React.FC<Props> = ({ data, onChange }) => {
       clearTimeout(debounce);
       aborted = true;
     };
-  }, [firmaName, ap.vorname, ap.name]);
+  }, [autoPruefen, firmaName, ap.vorname, ap.name]);
 
   if (!istBereit) {
     return (

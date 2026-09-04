@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Box, Typography, Button, IconButton, Tooltip, Chip, CircularProgress, Select, MenuItem, TextField, Divider } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
@@ -14,6 +14,7 @@ import type { AppUser } from '../../types/user';
 import { analysiereBhvFragebogen, berechneGesamteinschaetzung } from '../../utils/bhvAnalyse';
 import type { BhvGesamteinschaetzung } from '../../utils/bhvAnalyse';
 import { findeDokumentHinweise } from '../../utils/dokumentHinweise';
+import { pruefeSanktionen } from '../../utils/sanktionsAnalyse';
 import { analysiereRisiko } from '../../utils/risikoAnalyse';
 import { istEigenerVorgang } from '../../utils/berechtigung';
 import SanktionsPruefPanel from '../SanktionsPruefPanel';
@@ -620,15 +621,17 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hochladen, setHochladen] = useState(false);
   const [pruefeLaeuft, setPruefeLaeuft] = useState(false);
+  const [sanktionenLaufen, setSanktionenLaufen] = useState(false);
+  const [sanktionenFehler, setSanktionenFehler] = useState<string | null>(null);
   const [risikoLaeuft, setRisikoLaeuft] = useState(false);
   const [risikoFehler, setRisikoFehler] = useState<string | null>(null);
 
   const analyse = data.analyse ?? { dokumente: [] };
   const dokumente = analyse.dokumente;
   const bhvErgebnis = analyse.bhvErgebnis;
-  // Die Analyse wertet stets nur das zuletzt hochgeladene Dokument aus (siehe
+  // Die BHV-Dokumentenanalyse wertet stets nur das zuletzt hochgeladene Dokument aus (siehe
   // handleAnalyseStarten) — solange dieses mit dem zuletzt analysierten übereinstimmt, gibt es
-  // nichts Neues auszuwerten und der Button bleibt ausgegraut.
+  // für diesen Teil nichts Neues auszuwerten.
   const schonAnalysiert = Boolean(
     bhvErgebnis && dokumente.length > 0 && bhvErgebnis.dokumentId === dokumente[dokumente.length - 1].id
   );
@@ -678,43 +681,15 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
 
   const risikoAnalyse = data.risikoAnalyse;
 
-  const { wagnisanschrift } = data;
+  const { interessent, wagnisanschrift } = data;
+  const firmaName = interessent.name.trim();
+  const ansprechpartner = interessent.ansprechpartner;
+  const sanktionenBereit = firmaName.length >= 3;
   const adresseVollstaendig = istAdresseVollstaendig(wagnisanschrift);
-  const adresseKey = JSON.stringify([wagnisanschrift.strasse, wagnisanschrift.hausnummer, wagnisanschrift.plz, wagnisanschrift.ort, wagnisanschrift.land]);
-  // Bei erneutem Mounten (z.B. Tab-Wechsel) nicht sofort neu abfragen, wenn für die
-  // aktuellen Eingaben bereits ein Ergebnis vorliegt — sonst würde jeder Tab-Wechsel
-  // eine überflüssige Neuabfrage der externen APIs auslösen. Die Sanktionsprüfung läuft
-  // nicht mehr hier, sondern im gemeinsam mit Reiter 4 genutzten SanktionsPruefPanel.
-  const letzteAdresseRef = useRef<string>(risikoAnalyse ? adresseKey : '');
-
-  useEffect(() => {
-    if (!adresseVollstaendig) return;
-    const key = JSON.stringify([wagnisanschrift.strasse, wagnisanschrift.hausnummer, wagnisanschrift.plz, wagnisanschrift.ort, wagnisanschrift.land]);
-    if (key === letzteAdresseRef.current) return;
-
-    setRisikoLaeuft(true);
-    setRisikoFehler(null);
-    let aborted = false;
-
-    const debounce = setTimeout(() => {
-      letzteAdresseRef.current = key;
-      analysiereRisiko(wagnisanschrift)
-        .then((result) => { if (!aborted) onChange({ risikoAnalyse: result }); })
-        .catch((e: Error) => {
-          if (!aborted) {
-            letzteAdresseRef.current = '';
-            setRisikoFehler(e.message ?? 'Analyse fehlgeschlagen');
-          }
-        })
-        .finally(() => { if (!aborted) setRisikoLaeuft(false); });
-    }, 800);
-
-    return () => {
-      clearTimeout(debounce);
-      aborted = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wagnisanschrift.strasse, wagnisanschrift.hausnummer, wagnisanschrift.plz, wagnisanschrift.ort, wagnisanschrift.land]);
+  // Sanktionsprüfung und Standortrisikoanalyse laufen auf diesem Reiter nicht mehr automatisch
+  // bei Eingabe, sondern nur noch gebündelt über handleAnalyseStarten — siehe dort.
+  const hatEtwasZuPruefen = (dokumente.length > 0 && !schonAnalysiert) || sanktionenBereit || adresseVollstaendig;
+  const irgendeinePruefungLaeuft = pruefeLaeuft || sanktionenLaufen || risikoLaeuft;
 
   const handleDateiAuswahl = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -742,20 +717,51 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
     onChange({ analyse: { ...analyse, dokumente: dokumente.filter((d) => d.id !== id) } });
   };
 
+  // Bündelt alle drei Prüfungen dieses Reiters unter einem Button: BHV-Dokumentenanalyse,
+  // Sanktionsprüfung und Standortrisikoanalyse laufen erst bei Klick, nicht mehr automatisch
+  // bei Eingabe. Jede Teilprüfung läuft nur, wenn dafür etwas Neues vorliegt.
   const handleAnalyseStarten = async () => {
-    if (dokumente.length === 0) return;
-    setPruefeLaeuft(true);
-    try {
+    const aufgaben: Promise<void>[] = [];
+
+    if (dokumente.length > 0 && !schonAnalysiert) {
+      setPruefeLaeuft(true);
       const letztesDokument = dokumente[dokumente.length - 1];
-      const [bhvErgebnisNeu, hinweiseNeu] = await Promise.all([
-        analysiereBhvFragebogen(letztesDokument),
-        findeDokumentHinweise(dokumente),
-        new Promise((resolve) => setTimeout(resolve, 600)),
-      ]);
-      onChange({ analyse: { ...analyse, bhvErgebnis: bhvErgebnisNeu, hinweise: hinweiseNeu } });
-    } finally {
-      setPruefeLaeuft(false);
+      aufgaben.push(
+        Promise.all([
+          analysiereBhvFragebogen(letztesDokument),
+          findeDokumentHinweise(dokumente),
+          new Promise((resolve) => setTimeout(resolve, 600)),
+        ])
+          .then(([bhvErgebnisNeu, hinweiseNeu]) => {
+            onChange({ analyse: { ...analyse, bhvErgebnis: bhvErgebnisNeu, hinweise: hinweiseNeu } });
+          })
+          .finally(() => setPruefeLaeuft(false))
+      );
     }
+
+    if (sanktionenBereit) {
+      setSanktionenLaufen(true);
+      setSanktionenFehler(null);
+      aufgaben.push(
+        pruefeSanktionen(firmaName, [ansprechpartner])
+          .then((result) => { onChange({ sanktionsAnalyse: result }); })
+          .catch((e: Error) => { setSanktionenFehler(e.message ?? 'Prüfung fehlgeschlagen'); })
+          .finally(() => setSanktionenLaufen(false))
+      );
+    }
+
+    if (adresseVollstaendig) {
+      setRisikoLaeuft(true);
+      setRisikoFehler(null);
+      aufgaben.push(
+        analysiereRisiko(wagnisanschrift)
+          .then((result) => { onChange({ risikoAnalyse: result }); })
+          .catch((e: Error) => { setRisikoFehler(e.message ?? 'Analyse fehlgeschlagen'); })
+          .finally(() => setRisikoLaeuft(false))
+      );
+    }
+
+    await Promise.all(aufgaben);
   };
 
   return (
@@ -827,24 +833,26 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
         )}
       </Box>
 
-      {/* Analyse starten */}
+      {/* Analyse starten — stößt gebündelt BHV-Dokumentenanalyse, Sanktionsprüfung und
+          Standortrisikoanalyse an; jede Teilprüfung läuft nur, wenn dafür etwas vorliegt. */}
       <Box sx={{ mb: 3 }}>
         <Button
           variant="contained"
           startIcon={<FactCheckOutlinedIcon />}
           onClick={handleAnalyseStarten}
-          disabled={dokumente.length === 0 || pruefeLaeuft || schonAnalysiert}
+          disabled={irgendeinePruefungLaeuft || !hatEtwasZuPruefen}
         >
-          {pruefeLaeuft ? 'Prüfung läuft …' : 'Analyse starten'}
+          {irgendeinePruefungLaeuft ? 'Prüfung läuft …' : 'Analyse starten'}
         </Button>
-        {dokumente.length === 0 && (
+        {!hatEtwasZuPruefen && (
           <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8', mt: 1 }}>
-            Bitte mindestens ein Dokument hochladen.
+            Bitte mindestens ein Dokument hochladen oder Firmenname bzw. Wagnisanschrift auf Reiter 1 ausfüllen.
           </Typography>
         )}
-        {schonAnalysiert && (
+        {hatEtwasZuPruefen && schonAnalysiert && dokumente.length > 0 && (
           <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8', mt: 1 }}>
-            Bereits analysiert. Laden Sie ein weiteres Dokument hoch, um die Analyse erneut zu starten.
+            Dokument bereits analysiert. Laden Sie ein weiteres Dokument hoch, um die
+            Dokumentenanalyse erneut zu starten.
           </Typography>
         )}
       </Box>
@@ -859,7 +867,12 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
             <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A', mb: 1.5 }}>
               Sanktionsprüfung
             </Typography>
-            <SanktionsPruefPanel data={data} onChange={onChange} />
+            <SanktionsPruefPanel data={data} onChange={onChange} autoPruefen={false} />
+            {sanktionenFehler && !data.sanktionsAnalyse && (
+              <Typography sx={{ fontSize: '0.75rem', color: '#DC2626', mt: 1 }}>
+                Fehler: {sanktionenFehler}
+              </Typography>
+            )}
           </Box>
           <Box sx={{ p: 1.5, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -872,7 +885,7 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
                     : risikoAnalyse
                       ? `Analysiert am ${new Date(risikoAnalyse.analysiertAm).toLocaleDateString('de-DE')}`
                       : adresseVollstaendig
-                        ? (risikoFehler ? `Fehler: ${risikoFehler}` : 'Analyse wird gestartet …')
+                        ? (risikoFehler ? `Fehler: ${risikoFehler}` : 'Bereit — mit "Analyse starten" auslösen')
                         : 'Bitte Wagnisanschrift auf Reiter 1 vollständig ausfüllen'}
                 </Typography>
               </Box>
