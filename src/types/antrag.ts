@@ -534,26 +534,6 @@ export const MOCK_VORGAENGE: AntragData[] = [
       name: 'Korea Mining Development Trading Corporation',
       land: 'Demokratische Volksrepublik Korea', jahresumsatz: '', steuersatz: '0', mindestbeitrag: '',
     }],
-    sanktionsAnalyse: {
-      ampel: 'rot',
-      treffer: [
-        {
-          quelle: 'UN',
-          name: 'KOREA MINING DEVELOPMENT TRADING CORPORATION',
-          typ: 'Organisation',
-          regelung: 'DPRK sanctions (Resolution 1718)',
-        },
-        {
-          quelle: 'UN',
-          name: 'YUN HO-JIN',
-          typ: 'Person',
-          regelung: 'DPRK sanctions (Resolution 1718)',
-        },
-      ],
-      geprueftAm: '2026-06-18T19:00:00.000Z',
-      gepruefteFirma: 'Korea Mining Development Trading Corporation',
-      geprueftePersonen: ['Yun Ho-Jin'],
-    },
     createdAt: '2026-06-18T10:00:00.000Z',
     updatedAt: '2026-06-18T19:05:00.000Z',
   },
