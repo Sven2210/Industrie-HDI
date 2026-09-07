@@ -4,6 +4,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
+import GavelIcon from '@mui/icons-material/Gavel';
 import PublicIcon from '@mui/icons-material/Public';
 import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined';
 import ForwardToInboxOutlinedIcon from '@mui/icons-material/ForwardToInboxOutlined';
@@ -680,15 +681,33 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
   };
 
   const risikoAnalyse = data.risikoAnalyse;
+  const sanktionsAnalyse = data.sanktionsAnalyse;
 
   const { interessent, wagnisanschrift } = data;
   const firmaName = interessent.name.trim();
   const ansprechpartner = interessent.ansprechpartner;
   const sanktionenBereit = firmaName.length >= 3;
   const adresseVollstaendig = istAdresseVollstaendig(wagnisanschrift);
+  const adresseKey = JSON.stringify([wagnisanschrift.strasse, wagnisanschrift.hausnummer, wagnisanschrift.plz, wagnisanschrift.ort, wagnisanschrift.land]);
+  // Bereits vorhandenes Ergebnis erneut mit den aktuellen Reiter-1-Angaben abgleichen, damit der
+  // Button nach einer erfolgreichen Prüfung wieder ausgegraut wird und erst bei einer echten
+  // Änderung (neue Firma/Person bzw. neue Adresse) wieder aktiv wird.
+  const erwartetePersonen = ansprechpartner.name.trim() ? [`${ansprechpartner.vorname} ${ansprechpartner.name}`.trim()] : [];
+  const sanktionenSchonGeprueft = Boolean(
+    sanktionsAnalyse
+      && sanktionsAnalyse.gepruefteFirma === firmaName
+      && JSON.stringify(sanktionsAnalyse.geprueftePersonen) === JSON.stringify(erwartetePersonen)
+  );
+  // Die Standortrisikoanalyse speichert nicht die geprüfte Adresse selbst (nur lat/lon) —
+  // daher wird die zuletzt erfolgreich geprüfte Adresse separat gemerkt.
+  const letzteGepruefteAdresseRef = useRef<string>(risikoAnalyse ? adresseKey : '');
+  const adresseSchonGeprueft = adresseVollstaendig && adresseKey === letzteGepruefteAdresseRef.current;
   // Sanktionsprüfung und Standortrisikoanalyse laufen auf diesem Reiter nicht mehr automatisch
   // bei Eingabe, sondern nur noch gebündelt über handleAnalyseStarten — siehe dort.
-  const hatEtwasZuPruefen = (dokumente.length > 0 && !schonAnalysiert) || sanktionenBereit || adresseVollstaendig;
+  const hatEtwasZuPruefen =
+    (dokumente.length > 0 && !schonAnalysiert)
+    || (sanktionenBereit && !sanktionenSchonGeprueft)
+    || (adresseVollstaendig && !adresseSchonGeprueft);
   const irgendeinePruefungLaeuft = pruefeLaeuft || sanktionenLaufen || risikoLaeuft;
 
   const handleDateiAuswahl = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -739,7 +758,7 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
       );
     }
 
-    if (sanktionenBereit) {
+    if (sanktionenBereit && !sanktionenSchonGeprueft) {
       setSanktionenLaufen(true);
       setSanktionenFehler(null);
       aufgaben.push(
@@ -750,12 +769,16 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
       );
     }
 
-    if (adresseVollstaendig) {
+    if (adresseVollstaendig && !adresseSchonGeprueft) {
       setRisikoLaeuft(true);
       setRisikoFehler(null);
+      const geprüfteAdresseKey = adresseKey;
       aufgaben.push(
         analysiereRisiko(wagnisanschrift)
-          .then((result) => { onChange({ risikoAnalyse: result }); })
+          .then((result) => {
+            letzteGepruefteAdresseRef.current = geprüfteAdresseKey;
+            onChange({ risikoAnalyse: result });
+          })
           .catch((e: Error) => { setRisikoFehler(e.message ?? 'Analyse fehlgeschlagen'); })
           .finally(() => setRisikoLaeuft(false))
       );
@@ -864,9 +887,13 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Box sx={{ p: 1.5, bgcolor: '#fff', border: '1px solid #E2E8F0', borderRadius: 2 }}>
-            <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A', mb: 1.5 }}>
-              Sanktionsprüfung
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+              <GavelIcon sx={{ fontSize: 17, color: '#64748B' }} />
+              <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A', flex: 1 }}>
+                Sanktionsprüfung
+              </Typography>
+              {sanktionenLaufen && <CircularProgress size={16} />}
+            </Box>
             <SanktionsPruefPanel data={data} onChange={onChange} autoPruefen={false} />
             {sanktionenFehler && !data.sanktionsAnalyse && (
               <Typography sx={{ fontSize: '0.75rem', color: '#DC2626', mt: 1 }}>
