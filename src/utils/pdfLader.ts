@@ -103,3 +103,40 @@ export async function extrahiereLayoutText(dokument: HochgeladenesDokument): Pro
     return '';
   }
 }
+
+// Einzelne Textelemente mit Position (PDF-Koordinaten, Ursprung unten links). Für das Auslesen
+// von Formularfeldern, bei dem die Lage eines Werts zur Feldbeschriftung entscheidend ist —
+// die zeilenbasierte Variante oben verliert diese Information.
+export interface TextElement {
+  seite: number;
+  x: number;
+  y: number;
+  breite: number;
+  text: string;
+}
+
+export async function extrahiereTextElemente(dokument: HochgeladenesDokument): Promise<TextElement[]> {
+  try {
+    const pdf = await ladePdfDokument(dokument);
+    if (!pdf) return [];
+    const ergebnis: TextElement[] = [];
+    for (let seite = 1; seite <= pdf.numPages; seite++) {
+      const page = await pdf.getPage(seite);
+      const inhalt = await page.getTextContent();
+      for (const item of inhalt.items) {
+        if (!('str' in item) || item.str.trim() === '') continue;
+        ergebnis.push({
+          seite,
+          x: item.transform[4],
+          y: item.transform[5],
+          breite: item.width,
+          text: item.str.trim(),
+        });
+      }
+    }
+    return ergebnis;
+  } catch (e) {
+    console.error('[pdfLader] Textelement-Extraktion fehlgeschlagen für', dokument.dateiname, e);
+    return [];
+  }
+}

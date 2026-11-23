@@ -9,6 +9,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import SectionCard from '../SectionCard';
+import { markierung } from '../../utils/fragebogenUebernahme';
 import type { AntragData, Sparte, Zeichnungsart, SparteEntry } from '../../types/antrag';
 
 const BETRIEBSARTEN: Record<Sparte, string[]> = {
@@ -201,7 +202,7 @@ const Step2_Anbahnungsdaten: React.FC<Props> = ({ data, onChange }) => {
       <SectionCard icon={<CalendarMonthIcon sx={{ fontSize: 17 }} />} title="Fristen & Laufzeit" subtitle="Terminliche Rahmendaten" accent>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField fullWidth required label="Eingangsdatum *" value={ab.eingangsdatum}
+            <TextField fullWidth required label="Eingangsdatum *" {...markierung(data, 'anbahnungsdaten.eingangsdatum')} value={ab.eingangsdatum}
               onChange={(e) => update('eingangsdatum', e.target.value)} placeholder="TT.MM.JJJJ" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -253,7 +254,7 @@ const Step2_Anbahnungsdaten: React.FC<Props> = ({ data, onChange }) => {
           <TextField
             fullWidth multiline rows={3}
             label="Betriebsbeschreibung *"
-            value={ab.betriebsbeschreibung}
+            {...markierung(data, 'anbahnungsdaten.betriebsbeschreibung')} value={ab.betriebsbeschreibung}
             onChange={(e) => update('betriebsbeschreibung', e.target.value)}
             placeholder="Beschreiben Sie die Haupttätigkeit des Unternehmens, Produkte/Dienstleistungen und besondere Risikomerkmale..."
           />

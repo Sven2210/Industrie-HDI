@@ -5,6 +5,8 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutlined';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SectionCard from '../SectionCard';
+import FragebogenHinweis from '../FragebogenHinweis';
+import { markierung } from '../../utils/fragebogenUebernahme';
 import type { AntragData, Firmierung } from '../../types/antrag';
 
 const EUROPA_LAENDER = [
@@ -48,29 +50,31 @@ const Step1_Interessent: React.FC<Props> = ({ data, onChange }) => {
         Erfassen Sie die Stammdaten des Versicherungsnehmers und des Vertriebspartners.
       </Typography>
 
+      <FragebogenHinweis data={data} onChange={onChange} />
+
       {/* Interessent */}
       <SectionCard icon={<BusinessIcon sx={{ fontSize: 17 }} />} title="Interessent" subtitle="Versicherungsnehmer / Antragsteller" accent>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 8 }}>
-            <TextField fullWidth required label="Name *" value={vn.name} onChange={(e) => updateVN('name', e.target.value)} placeholder="Unternehmensname" />
+            <TextField fullWidth required label="Name *" {...markierung(data, 'interessent.name')} value={vn.name} onChange={(e) => updateVN('name', e.target.value)} placeholder="Unternehmensname" />
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <TextField fullWidth select required label="Firmierung *" value={vn.firmierung} onChange={(e) => updateVN('firmierung', e.target.value)}>
+            <TextField fullWidth select required label="Firmierung *" {...markierung(data, 'interessent.firmierung')} value={vn.firmierung} onChange={(e) => updateVN('firmierung', e.target.value)}>
               <MenuItem value=""><em>— bitte auswählen —</em></MenuItem>
               {FIRMIERUNGEN.map((f) => <MenuItem key={f} value={f}>{f}</MenuItem>)}
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, sm: 7 }}>
-            <TextField fullWidth required label="Straße *" value={vn.strasse} onChange={(e) => updateVN('strasse', e.target.value)} />
+            <TextField fullWidth required label="Straße *" {...markierung(data, 'interessent.strasse')} value={vn.strasse} onChange={(e) => updateVN('strasse', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, sm: 2 }}>
-            <TextField fullWidth required label="Nr. *" value={vn.hausnummer} onChange={(e) => updateVN('hausnummer', e.target.value)} />
+            <TextField fullWidth required label="Nr. *" {...markierung(data, 'interessent.hausnummer')} value={vn.hausnummer} onChange={(e) => updateVN('hausnummer', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, sm: 3 }}>
-            <TextField fullWidth required label="PLZ *" value={vn.plz} onChange={(e) => updateVN('plz', e.target.value)} slotProps={{ htmlInput: { maxLength: 10 } }} />
+            <TextField fullWidth required label="PLZ *" {...markierung(data, 'interessent.plz')} value={vn.plz} onChange={(e) => updateVN('plz', e.target.value)} slotProps={{ htmlInput: { maxLength: 10 } }} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField fullWidth required label="Ort *" value={vn.ort} onChange={(e) => updateVN('ort', e.target.value)} />
+            <TextField fullWidth required label="Ort *" {...markierung(data, 'interessent.ort')} value={vn.ort} onChange={(e) => updateVN('ort', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField fullWidth label="Adresszusatz" value={vn.adresszusatz} onChange={(e) => updateVN('adresszusatz', e.target.value)} />
@@ -86,16 +90,16 @@ const Step1_Interessent: React.FC<Props> = ({ data, onChange }) => {
           </Box>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <TextField fullWidth size="small" label="Name" value={vn.ansprechpartner.name} onChange={(e) => updateVNAP('name', e.target.value)} />
+              <TextField fullWidth size="small" label="Name" {...markierung(data, 'interessent.ansprechpartner.name')} value={vn.ansprechpartner.name} onChange={(e) => updateVNAP('name', e.target.value)} />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <TextField fullWidth size="small" label="Vorname" value={vn.ansprechpartner.vorname} onChange={(e) => updateVNAP('vorname', e.target.value)} />
+              <TextField fullWidth size="small" label="Vorname" {...markierung(data, 'interessent.ansprechpartner.vorname')} value={vn.ansprechpartner.vorname} onChange={(e) => updateVNAP('vorname', e.target.value)} />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
               <TextField fullWidth size="small" label="E-Mail" type="email" value={vn.ansprechpartner.email} onChange={(e) => updateVNAP('email', e.target.value)} />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <TextField fullWidth size="small" label="Telefon" value={vn.ansprechpartner.telefon} onChange={(e) => updateVNAP('telefon', e.target.value)} />
+              <TextField fullWidth size="small" label="Telefon" {...markierung(data, 'interessent.ansprechpartner.telefon')} value={vn.ansprechpartner.telefon} onChange={(e) => updateVNAP('telefon', e.target.value)} />
             </Grid>
           </Grid>
         </Box>
@@ -105,16 +109,16 @@ const Step1_Interessent: React.FC<Props> = ({ data, onChange }) => {
       <SectionCard icon={<LocationOnIcon sx={{ fontSize: 17 }} />} title="Wagnisanschrift" subtitle="Standort des versicherten Objekts / Risikos">
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 7 }}>
-            <TextField fullWidth required label="Straße *" value={wa.strasse} onChange={(e) => updateWA('strasse', e.target.value)} />
+            <TextField fullWidth required label="Straße *" {...markierung(data, 'wagnisanschrift.strasse')} value={wa.strasse} onChange={(e) => updateWA('strasse', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, sm: 2 }}>
-            <TextField fullWidth required label="Nr. *" value={wa.hausnummer} onChange={(e) => updateWA('hausnummer', e.target.value)} />
+            <TextField fullWidth required label="Nr. *" {...markierung(data, 'wagnisanschrift.hausnummer')} value={wa.hausnummer} onChange={(e) => updateWA('hausnummer', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, sm: 3 }}>
-            <TextField fullWidth required label="PLZ *" value={wa.plz} onChange={(e) => updateWA('plz', e.target.value)} slotProps={{ htmlInput: { maxLength: 10 } }} />
+            <TextField fullWidth required label="PLZ *" {...markierung(data, 'wagnisanschrift.plz')} value={wa.plz} onChange={(e) => updateWA('plz', e.target.value)} slotProps={{ htmlInput: { maxLength: 10 } }} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField fullWidth required label="Ort *" value={wa.ort} onChange={(e) => updateWA('ort', e.target.value)} />
+            <TextField fullWidth required label="Ort *" {...markierung(data, 'wagnisanschrift.ort')} value={wa.ort} onChange={(e) => updateWA('ort', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField fullWidth select required label="Land *" value={wa.land} onChange={(e) => updateWA('land', e.target.value)}>

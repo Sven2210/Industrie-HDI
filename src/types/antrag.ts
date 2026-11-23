@@ -290,6 +290,17 @@ export interface FreigabeAbgelehntEintrag {
 
 export type WorkflowEintrag = WeiterleitungsEintrag | VertriebsRueckmeldungEintrag | FreigabeErteiltEintrag | FreigabeAbgelehntEintrag;
 
+// Protokoll der automatischen Vorbefüllung aus dem Fragebogen: welche Felder übernommen wurden
+// (Pfad im Antrag → übernommener Wert, damit eine spätere manuelle Änderung erkennbar bleibt)
+// und was nicht gefunden wurde.
+export interface FragebogenUebernahme {
+  dokumentName: string;
+  uebernommenAm: string;
+  werte: Record<string, string>;
+  nichtGefunden: string[];
+  hinweis?: string;
+}
+
 export interface AntragData {
   id: string;
   vorgangsnr?: string;
@@ -308,6 +319,7 @@ export interface AntragData {
   umweltrisikoAnalyse?: UmweltrisikoAnalyse;
   analyse?: AnalyseDaten;
   workflow?: WorkflowEintrag[];
+  fragebogenUebernahme?: FragebogenUebernahme;
   createdAt: string;
   updatedAt: string;
 }

@@ -8,6 +8,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import BusinessIcon from '@mui/icons-material/Business';
 import SectionCard from '../SectionCard';
+import { markierung } from '../../utils/fragebogenUebernahme';
 import type { AntragData, Unternehmen, Risikobelegenheit } from '../../types/antrag';
 import { RISIKOBELEGENHEIT_LABELS } from '../../types/antrag';
 import {
@@ -32,7 +33,8 @@ const UnternehmenCard: React.FC<{
   canDelete: boolean;
   onUpdate: (id: string, field: keyof Unternehmen, val: string) => void;
   onDelete: (id: string) => void;
-}> = ({ item, index, abs, canDelete, onUpdate, onDelete }) => {
+  markiert: (feld: keyof Unternehmen) => { title?: string; sx: object };
+}> = ({ item, index, abs, canDelete, onUpdate, onDelete, markiert }) => {
   const umsatz = parseFormattedNumber(item.jahresumsatz);
   const steuer = parseFormattedNumber(item.steuersatz);
   const mindest = parseFormattedNumber(item.mindestbeitrag);
@@ -70,7 +72,7 @@ const UnternehmenCard: React.FC<{
         <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', mb: 0.75 }}>
           Risikobelegenheit *
         </Typography>
-        <TextField fullWidth select size="small" value={item.risikobelegenheit}
+        <TextField fullWidth select size="small" {...markiert('risikobelegenheit')} value={item.risikobelegenheit}
           onChange={(e) => onUpdate(item.id, 'risikobelegenheit', e.target.value)}>
           <MenuItem value=""><em>— bitte auswählen —</em></MenuItem>
           {(Object.keys(RISIKOBELEGENHEIT_LABELS) as Risikobelegenheit[]).map((k) => (
@@ -86,7 +88,7 @@ const UnternehmenCard: React.FC<{
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField fullWidth size="small" label="Name des Unternehmens" value={item.name}
+          <TextField fullWidth size="small" label="Name des Unternehmens" {...markiert('name')} value={item.name}
             onChange={(e) => onUpdate(item.id, 'name', e.target.value)} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -96,7 +98,7 @@ const UnternehmenCard: React.FC<{
           </TextField>
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField fullWidth size="small" label="Jahresumsatz (EUR)" value={item.jahresumsatz}
+          <TextField fullWidth size="small" label="Jahresumsatz (EUR)" {...markiert('jahresumsatz')} value={item.jahresumsatz}
             onChange={(e) => onUpdate(item.id, 'jahresumsatz', formatNumberInput(e.target.value))}
             slotProps={{ input: { endAdornment: <Typography sx={{ fontSize: '0.78rem', color: '#94A3B8' }}>EUR</Typography> } }} />
         </Grid>
@@ -200,7 +202,8 @@ const Step5_Beitragskalkulation: React.FC<Props> = ({ data, onChange }) => {
       <SectionCard icon={<EuroIcon sx={{ fontSize: 17 }} />} title="Beitragskalkulation" subtitle="Mitversicherte Unternehmen & Prämien" accent>
         {unternehmen.map((u, idx) => (
           <UnternehmenCard key={u.id} item={u} index={idx} abs={abs} canDelete={unternehmen.length > 1}
-            onUpdate={updateU} onDelete={deleteU} />
+            onUpdate={updateU} onDelete={deleteU}
+            markiert={(feld) => markierung(data, `unternehmen.${idx}.${feld}`)} />
         ))}
 
         <Button startIcon={<AddIcon />} variant="outlined" onClick={addU} fullWidth

@@ -5,8 +5,9 @@ import LoginPage from './components/LoginPage';
 import VorgangsuchePage from './components/VorgangsuchePage';
 import AntragStepper from './components/AntragStepper';
 import AdminUebersichtPage from './components/AdminUebersichtPage';
+import NeuerVorgangDialog from './components/NeuerVorgangDialog';
 import type { AntragData } from './types/antrag';
-import { initialAntragData, MOCK_VORGAENGE, migrateAntragData } from './types/antrag';
+import { MOCK_VORGAENGE, migrateAntragData } from './types/antrag';
 import type { AppUser } from './types/user';
 import { MOCK_USERS } from './data/users';
 import { kannBearbeiten } from './utils/berechtigung';
@@ -19,6 +20,7 @@ function App() {
   const [currentAntrag, setCurrentAntrag] = useState<AntragData | null>(null);
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [antragHerkunft, setAntragHerkunft] = useState<Page>('vorgangssuche');
+  const [neuerVorgangOffen, setNeuerVorgangOffen] = useState(false);
 
   const handleLogin = (user: AppUser) => {
     setCurrentUser(user);
@@ -32,9 +34,12 @@ function App() {
     }
   };
 
-  const handleNewVorgang = () => {
-    const antrag = initialAntragData();
-    if (currentUser) antrag.underwriter = currentUser.nachname;
+  // "Vorgang erfassen" öffnet zunächst den Einstiegsdialog (Fragebogen hochladen oder ohne
+  // Dokument starten); erst danach wird der Antrag angelegt.
+  const handleNewVorgang = () => setNeuerVorgangOffen(true);
+
+  const handleStartVorgang = (antrag: AntragData) => {
+    setNeuerVorgangOffen(false);
     setCurrentAntrag(antrag);
     setAntragHerkunft('vorgangssuche');
     setPage('antrag');
@@ -113,6 +118,12 @@ function App() {
           onShowUebersicht={istAdmin ? handleShowUebersicht : undefined}
         />
       )}
+      <NeuerVorgangDialog
+        open={neuerVorgangOffen}
+        underwriter={currentUser?.nachname}
+        onClose={() => setNeuerVorgangOffen(false)}
+        onStart={handleStartVorgang}
+      />
     </ThemeProvider>
   );
 }

@@ -10,6 +10,7 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SectionCard from '../SectionCard';
+import { markierung } from '../../utils/fragebogenUebernahme';
 import type { AntragData, WKZEntry, ZuAbschlag } from '../../types/antrag';
 import { calcRisikobeitragssatz, calcVorschlagsbeitragssatz } from '../../utils/calculations';
 import { parseFormattedNumber, formatNumberInput } from '../../utils/format';
@@ -150,7 +151,7 @@ const Step4_Risikokalkulation: React.FC<Props> = ({ data, onChange }) => {
           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', flexWrap: 'wrap' }}>
             <TextField size="small" label="EUR" value={kalk.versicherungssumme}
               onChange={(e) => updateKalk('versicherungssumme', formatNumberInput(e.target.value))}
-              sx={{ width: 200 }}
+              {...markierung(data, 'risikokalkulation.versicherungssumme', { width: 200 })}
               slotProps={{ input: { endAdornment: <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8' }}>EUR</Typography> } }} />
             <Button size="small" variant="outlined" startIcon={<TrendingUpIcon />} onClick={() => addZuschlag('VS')}
               sx={{ textTransform: 'none', fontSize: '0.75rem', color: '#C2410C', borderColor: '#FED7AA' }}>
