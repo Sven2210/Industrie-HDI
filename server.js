@@ -1,6 +1,8 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createAiHubClient } from './server/aiHub.js';
+import { createKiRouter } from './server/kiRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,6 +72,11 @@ app.use('/proxy/nominatim', fetchProxy('https://nominatim.openstreetmap.org', {
 app.use('/proxy/overpass', fetchProxy('https://overpass-api.de', {
   'User-Agent': 'IndustrieRisikoApp/1.0',
 }));
+
+// adesso AI Hub: API-Key (AI_HUB_API_KEY) und Modell (AI_HUB_MODEL) nur serverseitig aus der Umgebung.
+app.use('/api/ki', createKiRouter(createAiHubClient()));
+// Unbekannte API-Pfade nie als SPA-HTML (200) ausliefern
+app.use('/api', (_req, res) => res.status(404).json({ fehler: { art: 'nicht_gefunden', meldung: 'Unbekannter API-Pfad.' } }));
 
 app.use(express.static(path.join(__dirname, 'dist')));
 

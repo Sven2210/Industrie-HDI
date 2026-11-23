@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# lokale Secrets (z. B. AI_HUB_API_KEY) nie einchecken
+.env
+.env.*
