@@ -9,7 +9,7 @@
     "start": "node server.js",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:server": "node --test server/aiHub.test.js server/kiRoutes.test.js"
+    "test:server": "node --test server/*.test.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

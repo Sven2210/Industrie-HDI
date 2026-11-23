@@ -19,6 +19,7 @@ import { pruefeSanktionen } from '../../utils/sanktionsAnalyse';
 import { analysiereRisiko } from '../../utils/risikoAnalyse';
 import { istEigenerVorgang } from '../../utils/berechtigung';
 import SanktionsPruefPanel from '../SanktionsPruefPanel';
+import RisikoZusammenfassungPanel from '../RisikoZusammenfassungPanel';
 
 function istAdresseVollstaendig(wa: AntragData['wagnisanschrift']): boolean {
   return !!(wa.strasse && wa.hausnummer && wa.plz && wa.ort && wa.land);
@@ -968,6 +969,8 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
           <Typography sx={{ fontSize: '0.82rem' }}>Dokument wird ausgewertet …</Typography>
         </Box>
       )}
+
+      <RisikoZusammenfassungPanel data={data} onChange={onChange} />
 
       <WorkflowSektion data={data} onChange={onWorkflowChange} currentUser={currentUser} users={users} />
     </Box>

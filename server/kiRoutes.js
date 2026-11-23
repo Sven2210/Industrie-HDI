@@ -1,10 +1,11 @@
 // HTTP-Routen für den AI Hub. Bewusst KEIN generischer Chat-Proxy: Der Browser bekommt nur
-// Status, Modellliste und einen festen Verbindungstest. Fachliche KI-Funktionen kommen später
-// als eigene Routen mit festem Prompt hinzu, damit über das Backend nicht beliebig Token
-// auf Kosten des AI-Hub-Keys verbraucht werden können.
+// Status, Modellliste, einen festen Verbindungstest und fachliche Funktionen mit festem Prompt
+// (z. B. Risikozusammenfassung), damit über das Backend nicht beliebig Token auf Kosten des
+// AI-Hub-Keys verbraucht werden können.
 
-import { Router } from 'express';
+import express, { Router } from 'express';
 import { AiHubError, httpStatusFuerClient } from './aiHub.js';
+import { bereinigeEingabe, baueMessages, parseZusammenfassung } from './risikoZusammenfassung.js';
 
 export function sendeFehler(res, e) {
   if (!(e instanceof AiHubError)) {
@@ -32,7 +33,10 @@ export function createRateLimiter({ max, fensterMs, jetzt = Date.now }) {
   };
 }
 
-export function createKiRouter(client, { pingLimit = createRateLimiter({ max: 10, fensterMs: 60_000 }) } = {}) {
+export function createKiRouter(client, {
+  pingLimit = createRateLimiter({ max: 10, fensterMs: 60_000 }),
+  zusammenfassungLimit = createRateLimiter({ max: 20, fensterMs: 60_000 }),
+} = {}) {
   const router = Router();
 
   router.get('/status', (_req, res) => {
@@ -63,6 +67,38 @@ export function createKiRouter(client, { pingLimit = createRateLimiter({ max: 10
     } catch (e) {
       sendeFehler(res, e);
     }
+  });
+
+  // Risikozusammenfassung: fester Prompt, Eingabe wird geprüft und gekürzt (siehe risikoZusammenfassung.js).
+  router.post('/risikozusammenfassung', express.json({ limit: '64kb' }), async (req, res) => {
+    const warten = zusammenfassungLimit();
+    if (warten > 0) {
+      res.setHeader('Retry-After', String(warten));
+      return res.status(429).json({ fehler: { art: 'rate_limit', meldung: 'Zu viele Anfragen — bitte kurz warten.' } });
+    }
+    const eingabe = bereinigeEingabe(req.body);
+    if (!eingabe) {
+      return res.status(400).json({ fehler: { art: 'ungueltige_anfrage', meldung: 'Keine Analyseergebnisse zum Zusammenfassen übergeben.' } });
+    }
+    try {
+      const ergebnis = await client.chat({ messages: baueMessages(eingabe), maxTokens: 4000 });
+      const zusammenfassung = parseZusammenfassung(ergebnis.text);
+      if (!zusammenfassung) {
+        // Nur Form der Antwort loggen (Abbruchgrund, Länge, Anfang) — zur Diagnose, ohne Eingabedaten.
+        console.error(`[ki] Zusammenfassung: Modellantwort nicht lesbar (finish_reason=${ergebnis.finishReason}, ${ergebnis.text.length} Zeichen): ${JSON.stringify(ergebnis.text.slice(0, 200))}`);
+        return res.status(502).json({ fehler: { art: 'antwortformat', meldung: `Die Antwort des Modells war nicht auswertbar (Abbruchgrund: ${ergebnis.finishReason ?? 'unbekannt'}, ${ergebnis.text.length} Zeichen). Bitte erneut versuchen.` } });
+      }
+      res.json({ zusammenfassung, modell: ergebnis.modell, erstelltAm: new Date().toISOString() });
+    } catch (e) {
+      sendeFehler(res, e);
+    }
+  });
+
+  // Fehler des JSON-Parsers (kaputtes JSON, zu groß) als JSON statt Express-HTML melden
+  router.use((err, _req, res, next) => {
+    if (res.headersSent) return next(err);
+    const zuGross = err?.type === 'entity.too.large';
+    res.status(zuGross ? 413 : 400).json({ fehler: { art: zuGross ? 'zu_gross' : 'ungueltige_anfrage', meldung: zuGross ? 'Die Anfrage ist zu groß.' : 'Ungültige Anfrage.' } });
   });
 
   return router;

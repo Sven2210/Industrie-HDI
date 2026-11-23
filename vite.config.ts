@@ -77,4 +77,9 @@ export default defineConfig({
       'User-Agent': 'IndustrieRisikoApp/1.0',
     }),
   ],
+  // KI-Funktionen laufen im Express-Backend (server.js, `npm start`, Port 3000) — im Dev-Modus
+  // dorthin weiterleiten. Der AI-Hub-Key bleibt dort in der Umgebungsvariable.
+  server: {
+    proxy: { '/api': 'http://localhost:3000' },
+  },
 });

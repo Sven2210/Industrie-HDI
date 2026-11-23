@@ -301,6 +301,17 @@ export interface FragebogenUebernahme {
   hinweis?: string;
 }
 
+// KI-Zusammenfassung der Analyseergebnisse (adesso AI Hub). `eingabeStand` identifiziert die Daten,
+// aus denen sie erzeugt wurde — so lässt sich erkennen, wenn sich die Analysen danach geändert haben.
+export interface RisikoZusammenfassung {
+  kurzfazit: string;
+  stichpunkte: { titel: string; text: string; ampel: RisikoAmpel }[];
+  offenePunkte: string[];
+  erstelltAm: string;
+  modell: string;
+  eingabeStand: string;
+}
+
 export interface AntragData {
   id: string;
   vorgangsnr?: string;
@@ -320,6 +331,7 @@ export interface AntragData {
   analyse?: AnalyseDaten;
   workflow?: WorkflowEintrag[];
   fragebogenUebernahme?: FragebogenUebernahme;
+  risikoZusammenfassung?: RisikoZusammenfassung;
   createdAt: string;
   updatedAt: string;
 }
