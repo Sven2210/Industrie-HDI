@@ -172,3 +172,30 @@ test('POST /risikozusammenfassung: Hub-Fehler und Rate-Limit', async () => {
     assert.equal(aufrufe, 1);
   });
 });
+
+// ---- Rückfrage-Entwurf ----
+
+const postRueckfrage = (basis, body) => fetch(`${basis}/rueckfrage-entwurf`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+
+test('POST /rueckfrage-entwurf: liefert Entwurf, Kundendaten gehen nicht ans Modell', async () => {
+  let gesendet;
+  const fetchImpl = async (_u, opts) => {
+    gesendet = JSON.parse(opts.body);
+    return modellAntwort(JSON.stringify({ betreff: 'Rückfrage', nachricht: 'Guten Tag,\n- Umsatz' }));
+  };
+  await mitServer({ AI_HUB_API_KEY: TEST_KEY, AI_HUB_MODEL: 'm' }, fetchImpl, undefined, async (basis) => {
+    const res = await postRueckfrage(basis, { offenePunkte: [{ titel: 'Umsatz', hinweis: 'fehlt' }], kunde: 'GEHEIM GmbH' });
+    assert.equal(res.status, 200);
+    assert.deepEqual((await res.json()).entwurf, { betreff: 'Rückfrage', nachricht: 'Guten Tag,\n- Umsatz' });
+    assert.ok(!JSON.stringify(gesendet).includes('GEHEIM'));
+  });
+});
+
+test('POST /rueckfrage-entwurf: ohne Punkte 400, unlesbare Modellantwort 502', async () => {
+  await mitServer({ AI_HUB_API_KEY: TEST_KEY, AI_HUB_MODEL: 'm' }, async () => modellAntwort('Hallo'), undefined, async (basis) => {
+    assert.equal((await postRueckfrage(basis, {})).status, 400);
+    const res = await postRueckfrage(basis, { offenePunkte: [{ titel: 'Umsatz' }] });
+    assert.equal(res.status, 502);
+    assert.equal((await res.json()).fehler.art, 'antwortformat');
+  });
+});

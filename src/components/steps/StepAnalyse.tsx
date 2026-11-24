@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Box, Typography, Button, IconButton, Tooltip, Chip, CircularProgress, Select, MenuItem, TextField, Divider } from '@mui/material';
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
@@ -20,6 +21,7 @@ import { analysiereRisiko } from '../../utils/risikoAnalyse';
 import { istEigenerVorgang } from '../../utils/berechtigung';
 import SanktionsPruefPanel from '../SanktionsPruefPanel';
 import RisikoZusammenfassungPanel from '../RisikoZusammenfassungPanel';
+import { baueRueckfrageEingabe, erzeugeRueckfrageEntwurf } from '../../utils/rueckfrageEntwurf';
 
 function istAdresseVollstaendig(wa: AntragData['wagnisanschrift']): boolean {
   return !!(wa.strasse && wa.hausnummer && wa.plz && wa.ort && wa.land);
@@ -309,6 +311,8 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
   const [grund, setGrund] = useState('');
   const [ablehnungsGrund, setAblehnungsGrund] = useState('');
   const [anmerkung, setAnmerkung] = useState('');
+  const [entwurfLaedt, setEntwurfLaedt] = useState(false);
+  const [entwurfFehler, setEntwurfFehler] = useState<string | null>(null);
 
   const workflow = data.workflow ?? [];
   const bhvErgebnis = data.analyse?.bhvErgebnis;
@@ -368,6 +372,25 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
     };
     onChange({ status: 'freigabe abgelehnt', workflow: [...workflow, eintrag] });
     setAblehnungsGrund('');
+  };
+
+  const fehlendeAngaben = data.fragebogenUebernahme?.nichtGefunden ?? [];
+  // Zeilenzahl des Anmerkungsfelds (ca. 40 Zeichen pro Zeile) — begrenzt auf 2 bis 18
+  const entwurfZeilen = Math.min(18, Math.max(2, anmerkung.split('\n').reduce((summe, z) => summe + Math.max(1, Math.ceil(z.length / 40)), 0)));
+
+  // KI-Entwurf der Rückfrage: ersetzt einen leeren Text, hängt sich sonst unter die vorhandene Anmerkung.
+  const handleEntwurfErstellen = async () => {
+    setEntwurfLaedt(true);
+    setEntwurfFehler(null);
+    try {
+      const entwurf = await erzeugeRueckfrageEntwurf(baueRueckfrageEingabe(data, anmerkung.trim()));
+      const text = entwurf.betreff ? `Betreff: ${entwurf.betreff}\n\n${entwurf.nachricht}` : entwurf.nachricht;
+      setAnmerkung(anmerkung.trim() ? `${anmerkung.trim()}\n\n---\n${text}` : text);
+    } catch (e) {
+      setEntwurfFehler(e instanceof Error ? e.message : 'Der Entwurf konnte nicht erstellt werden.');
+    } finally {
+      setEntwurfLaedt(false);
+    }
   };
 
   const handleRueckmeldungSenden = () => {
@@ -540,18 +563,40 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
                   Keine offenen Punkte — alle Kategorien beantwortet.
                 </Typography>
               )}
+              {(offeneKategorien.length > 0 || fehlendeAngaben.length > 0) && (
+                <Button
+                  size="small"
+                  startIcon={entwurfLaedt ? <CircularProgress size={14} /> : <AutoAwesomeOutlinedIcon />}
+                  onClick={handleEntwurfErstellen}
+                  disabled={entwurfLaedt}
+                  sx={{ alignSelf: 'flex-start', mb: 1, textTransform: 'none', fontSize: '0.74rem' }}
+                >
+                  {entwurfLaedt ? 'Entwurf wird erstellt …' : 'Nachricht mit KI entwerfen'}
+                </Button>
+              )}
+              {entwurfFehler && (
+                <Typography sx={{ fontSize: '0.72rem', color: '#DC2626', mb: 1 }}>{entwurfFehler}</Typography>
+              )}
               <TextField
                 size="small"
                 fullWidth
                 multiline
-                minRows={2}
+                minRows={entwurfZeilen}
+                maxRows={40}
                 placeholder="Zusätzliche Anmerkung"
                 value={anmerkung}
                 onChange={(e) => setAnmerkung(e.target.value)}
                 sx={{
-                  bgcolor: '#fff', mb: 1.5, flex: 1,
-                  '& .MuiInputBase-root': { height: '100%', alignItems: 'flex-start' },
-                  '& .MuiInputBase-input': { height: '100% !important', overflow: 'auto' },
+                  bgcolor: '#fff', mb: 1.5,
+                  // Kurzer Text: Feld füllt die Kartenhöhe. Längerer Text (z. B. KI-Entwurf): Feld wächst mit,
+                  // damit der ganze Text sichtbar ist statt nur die erste Zeile.
+                  ...(entwurfZeilen <= 2
+                    ? {
+                        flex: 1,
+                        '& .MuiInputBase-root': { height: '100%', alignItems: 'flex-start' },
+                        '& .MuiInputBase-input': { height: '100% !important', overflow: 'auto' },
+                      }
+                    : {}),
                 }}
               />
               <Button
@@ -599,6 +644,18 @@ const WorkflowSektion: React.FC<WorkflowProps> = ({ data, onChange, currentUser,
                   ) : (
                     <>Rückmeldung an Vertrieb gesendet von {eintrag.erstelltVonName} · {formatDatum(eintrag.erstelltAm)}
                       {' '}<Box component="span" sx={{ color: '#94A3B8' }}>— {eintrag.offeneKategorien.length} offene {eintrag.offeneKategorien.length === 1 ? 'Punkt' : 'Punkte'}</Box>
+                      {eintrag.offeneKategorien.length > 0 && (
+                        <Box component="ul" sx={{ m: 0, mt: 0.25, pl: 2.25, color: '#64748B' }}>
+                          {eintrag.offeneKategorien.map((titel) => (
+                            <li key={titel}>{titel}</li>
+                          ))}
+                        </Box>
+                      )}
+                      {eintrag.anmerkung && (
+                        <Box sx={{ mt: 0.5, p: 1, bgcolor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 1, color: '#475569', whiteSpace: 'pre-wrap' }}>
+                          {eintrag.anmerkung}
+                        </Box>
+                      )}
                     </>
                   )}
                 </Typography>

@@ -72,7 +72,7 @@ export function baueMessages(eingabe) {
 
 // Das Modell liefert JSON, manchmal in einem Codeblock oder mit Text drumherum: das erste
 // vollständige (ausgewogene) Objekt der Antwort wird gelesen.
-function ersteJsonObjekt(antworttext) {
+export function ersteJsonObjekt(antworttext) {
   let tiefe = 0;
   let inString = false;
   let escape = false;

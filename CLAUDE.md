@@ -10,6 +10,9 @@ React 19 + TypeScript + Vite + Tailwind + Material UI (MUI). Repo: github.com/Sv
 ## Starten & Verifizieren
 - Dev-Server: `npm run dev` (Vite, Standard-Port 5173 — bei Belegung weicht Vite auf 5174+ aus;
   immer den tatsächlich gemeldeten Port verwenden).
+- Mit KI-Funktionen (adesso AI Hub): `bash start-ki.sh` — holt den Key aus dem macOS-Schlüsselbund
+  (beim ersten Mal wird er abgefragt; `--key-neu` ersetzt ihn), baut und startet `server.js` auf
+  Port 3000. Im Dev-Modus leitet Vite `/api` dorthin weiter. Der Key steht nie in Dateien.
 - Nach Änderungen die App selbst im Browser prüfen, bevor "fertig" gemeldet wird.
 - TypeScript-Check: `npm run build` oder `./node_modules/.bin/tsc -b`
   (NICHT `npx tsc` — das installiert ein falsches Paket).

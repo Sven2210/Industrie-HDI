@@ -5,6 +5,7 @@
 
 import express, { Router } from 'express';
 import { AiHubError, httpStatusFuerClient } from './aiHub.js';
+import { bereinigeRueckfrageEingabe, baueRueckfrageMessages, parseRueckfrage } from './rueckfrageEntwurf.js';
 import { bereinigeEingabe, baueMessages, parseZusammenfassung } from './risikoZusammenfassung.js';
 
 export function sendeFehler(res, e) {
@@ -36,6 +37,7 @@ export function createRateLimiter({ max, fensterMs, jetzt = Date.now }) {
 export function createKiRouter(client, {
   pingLimit = createRateLimiter({ max: 10, fensterMs: 60_000 }),
   zusammenfassungLimit = createRateLimiter({ max: 20, fensterMs: 60_000 }),
+  rueckfrageLimit = createRateLimiter({ max: 20, fensterMs: 60_000 }),
 } = {}) {
   const router = Router();
 
@@ -89,6 +91,30 @@ export function createKiRouter(client, {
         return res.status(502).json({ fehler: { art: 'antwortformat', meldung: `Die Antwort des Modells war nicht auswertbar (Abbruchgrund: ${ergebnis.finishReason ?? 'unbekannt'}, ${ergebnis.text.length} Zeichen). Bitte erneut versuchen.` } });
       }
       res.json({ zusammenfassung, modell: ergebnis.modell, erstelltAm: new Date().toISOString() });
+    } catch (e) {
+      sendeFehler(res, e);
+    }
+  });
+
+  // Rückfrage an den Vertrieb: Entwurf aus den offenen Punkten (siehe rueckfrageEntwurf.js).
+  router.post('/rueckfrage-entwurf', express.json({ limit: '32kb' }), async (req, res) => {
+    const warten = rueckfrageLimit();
+    if (warten > 0) {
+      res.setHeader('Retry-After', String(warten));
+      return res.status(429).json({ fehler: { art: 'rate_limit', meldung: 'Zu viele Anfragen — bitte kurz warten.' } });
+    }
+    const eingabe = bereinigeRueckfrageEingabe(req.body);
+    if (!eingabe) {
+      return res.status(400).json({ fehler: { art: 'ungueltige_anfrage', meldung: 'Keine offenen Punkte übergeben.' } });
+    }
+    try {
+      const ergebnis = await client.chat({ messages: baueRueckfrageMessages(eingabe), maxTokens: 2000 });
+      const entwurf = parseRueckfrage(ergebnis.text);
+      if (!entwurf) {
+        console.error(`[ki] Rückfrage: Modellantwort nicht lesbar (finish_reason=${ergebnis.finishReason}, ${ergebnis.text.length} Zeichen)`);
+        return res.status(502).json({ fehler: { art: 'antwortformat', meldung: 'Die Antwort des Modells war nicht auswertbar. Bitte erneut versuchen.' } });
+      }
+      res.json({ entwurf, modell: ergebnis.modell });
     } catch (e) {
       sendeFehler(res, e);
     }
