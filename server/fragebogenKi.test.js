@@ -59,3 +59,17 @@ test('parseFragebogenAntwort: ohne verwertbaren Inhalt undefined; ungültige PLZ
   const r = parseFragebogenAntwort('{"felder":{"plzOrt":"Dortmund","datum":"gestern","firma":"X"},"bhv":{}}');
   assert.deepEqual(r.felder, { firma: 'X' });
 });
+
+test('parseFragebogenAntwort: Platzhalter und Anmerkungen im Wert werden verworfen', () => {
+  const r = parseFragebogenAntwort(JSON.stringify({
+    felder: {
+      firma: 'Mustermann GmbH',
+      ergaenzung: 'Spritzguss und Montage von Auto[...] (am Rand abgeschnitten)',
+      herstellung: 'unleserlich',
+      mitversicherte: ['A GmbH, Weg 1', 'B GmbH, Straße 2 …'],
+    },
+    bhv: { produktion: { ausgefuellt: true, angaben: 'Pumpen [Rest abgeschnitten]', gefahrenbranche: false } },
+  }));
+  assert.deepEqual(r.felder, { firma: 'Mustermann GmbH', mitversicherte: ['A GmbH, Weg 1'] });
+  assert.equal(r.bhvFakten.produktion.angaben, '');
+});
