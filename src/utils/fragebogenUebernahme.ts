@@ -74,6 +74,9 @@ export interface AnwendenOptionen {
   // Beim Anlegen eines neuen Vorgangs ist das Eingangsdatum nur mit "heute" vorbelegt —
   // das ist keine Benutzereingabe und darf durch das Datum aus dem Fragebogen ersetzt werden.
   ersetzeStandardwerte?: boolean;
+  // Bei einer Notiz/einem Foto ist nicht erkennbar, welche Sparte gemeint ist (keine Vorbelegung), und
+  // dass z. B. Umsatz oder Deckungssumme fehlen, ist keine Lücke (keine "Nicht gefunden"-Liste).
+  ohneSparte?: boolean;
 }
 
 export function wendeFragebogenAn(
@@ -209,20 +212,21 @@ export function wendeFragebogenAn(
   }
 
   // Sparte nur setzen, wenn das Dokument als dieser Fragebogen erkannt wurde
-  if (Object.keys(werte).length > 0 && neu.anbahnungsdaten.sparten?.length > 0) {
+  if (!optionen.ohneSparte && Object.keys(werte).length > 0 && neu.anbahnungsdaten.sparten?.length > 0) {
     setze('anbahnungsdaten.sparten.0.sparte', 'Haftpflicht');
   }
 
   const nichtGefunden: string[] = [];
-  if (!felder.firma) nichtGefunden.push('Firmenname');
-  if (!felder.strasseNr) nichtGefunden.push('Straße/Hausnummer');
-  if (!felder.plzOrt) nichtGefunden.push('PLZ/Ort');
-  if (!felder.antragsteller) nichtGefunden.push('Antragsteller');
-  if (!felder.telefon) nichtGefunden.push('Telefon');
-  if (!felder.datum) nichtGefunden.push('Antragsdatum');
-  if (!beschreibung) nichtGefunden.push('Betriebsbeschreibung');
-  if (felder.gesamtumsatz === undefined) nichtGefunden.push('Gesamtumsatz');
-  if (felder.deckungssumme === undefined) nichtGefunden.push('Deckungssumme');
+  const notiz = optionen.ohneSparte === true;
+  if (!notiz && !felder.firma) nichtGefunden.push('Firmenname');
+  if (!notiz && !felder.strasseNr) nichtGefunden.push('Straße/Hausnummer');
+  if (!notiz && !felder.plzOrt) nichtGefunden.push('PLZ/Ort');
+  if (!notiz && !felder.antragsteller) nichtGefunden.push('Antragsteller');
+  if (!notiz && !felder.telefon) nichtGefunden.push('Telefon');
+  if (!notiz && !felder.datum) nichtGefunden.push('Antragsdatum');
+  if (!notiz && !beschreibung) nichtGefunden.push('Betriebsbeschreibung');
+  if (!notiz && felder.gesamtumsatz === undefined) nichtGefunden.push('Gesamtumsatz');
+  if (!notiz && felder.deckungssumme === undefined) nichtGefunden.push('Deckungssumme');
 
   neu.fragebogenUebernahme = {
     dokumentName,

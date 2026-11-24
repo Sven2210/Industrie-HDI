@@ -5,6 +5,7 @@ import type { AntragData } from '../types/antrag';
 import { initialAntragData } from '../types/antrag';
 import { dateiZuDokument } from '../utils/fragebogenEinlesen';
 import { leseFragebogenKombiniert } from '../utils/fragebogenKi';
+import { istBild, leseNotiz } from '../utils/notizEinlesen';
 import { wendeKombiniertAn } from '../utils/fragebogenUebernahme';
 
 interface Props {
@@ -29,23 +30,34 @@ const NeuerVorgangDialog: React.FC<Props> = ({ open, underwriter, onClose, onSta
     const file = e.target.files?.[0];
     if (inputRef.current) inputRef.current.value = '';
     if (!file) return;
-    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
-      setFehler('Bitte eine PDF-Datei auswählen.');
+    const istPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+    if (!istPdf && !istBild(file)) {
+      setFehler('Bitte ein PDF oder ein Foto (JPG, PNG) auswählen.');
       return;
     }
 
     setLaedt(true);
     setFehler(null);
     try {
-      const dokument = await dateiZuDokument(file);
-      const kombi = await leseFragebogenKombiniert(dokument);
       let antrag = leererAntrag();
-      antrag.analyse = { dokumente: [dokument] };
-      antrag = wendeKombiniertAn(antrag, kombi, dokument.dateiname, { ersetzeStandardwerte: true });
+      if (istPdf) {
+        const dokument = await dateiZuDokument(file);
+        const kombi = await leseFragebogenKombiniert(dokument);
+        antrag.analyse = { dokumente: [dokument] };
+        antrag = wendeKombiniertAn(antrag, kombi, dokument.dateiname, { ersetzeStandardwerte: true });
+      } else {
+        // Foto/Notiz: nur per KI lesbar; das Bild wird nicht als Dokument zur Analyse abgelegt
+        const kombi = await leseNotiz(file);
+        antrag = wendeKombiniertAn(antrag, kombi, file.name, { ersetzeStandardwerte: true, ohneSparte: true });
+      }
       onStart(antrag);
     } catch (err) {
-      console.error('[NeuerVorgangDialog] Fragebogen konnte nicht gelesen werden', err);
-      setFehler('Der Fragebogen konnte nicht gelesen werden. Sie können den Vorgang auch ohne Dokument starten.');
+      console.error('[NeuerVorgangDialog] Datei konnte nicht gelesen werden', err);
+      setFehler(
+        istPdf
+          ? 'Der Fragebogen konnte nicht gelesen werden. Sie können den Vorgang auch ohne Dokument starten.'
+          : `${err instanceof Error ? err.message : 'Das Foto konnte nicht gelesen werden.'} Sie können den Vorgang auch ohne Dokument starten.`,
+      );
     } finally {
       setLaedt(false);
     }
@@ -74,22 +86,22 @@ const NeuerVorgangDialog: React.FC<Props> = ({ open, underwriter, onClose, onSta
           {laedt ? (
             <>
               <CircularProgress size={28} />
-              <Typography sx={{ mt: 1.5, fontSize: '0.85rem', color: '#64748B' }}>Fragebogen wird gelesen … (bei Lücken kann das einige Sekunden dauern)</Typography>
+              <Typography sx={{ mt: 1.5, fontSize: '0.85rem', color: '#64748B' }}>Wird gelesen … (bei Fotos und Lücken kann das einige Sekunden dauern)</Typography>
             </>
           ) : (
             <>
               <UploadFileIcon sx={{ fontSize: 34, color: 'primary.main' }} />
               <Typography sx={{ mt: 0.5, fontSize: '0.9rem', fontWeight: 600, color: '#0F172A' }}>
-                Fragebogen (PDF) auswählen
+                Fragebogen (PDF) oder Foto auswählen
               </Typography>
-              <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8' }}>Digital ausgefülltes PDF oder Scan</Typography>
+              <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8' }}>PDF, Scan oder Foto einer Notiz (z. B. handschriftliche Adresse)</Typography>
             </>
           )}
-          <input ref={inputRef} type="file" accept=".pdf,application/pdf" hidden onChange={handleDatei} />
+          <input ref={inputRef} type="file" accept=".pdf,application/pdf,image/jpeg,image/png,image/webp" hidden onChange={handleDatei} />
         </Box>
 
         <Typography sx={{ mt: 2, fontSize: '0.74rem', color: '#64748B' }}>
-          Hinweis: Fehlen im PDF Angaben oder ist es ein Scan, wird das Dokument zur Auswertung an den
+          Hinweis: Fotos sowie PDFs mit Lücken oder ohne Text werden zur Auswertung an den
           adesso AI Hub gesendet (sofern eingerichtet). So gelesene Felder sind im Antrag gelb markiert
           und sollten geprüft werden.
         </Typography>

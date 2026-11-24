@@ -5,7 +5,7 @@
 
 import express, { Router } from 'express';
 import { AiHubError, httpStatusFuerClient } from './aiHub.js';
-import { bereinigeFragebogenEingabe, baueFragebogenMessages, parseFragebogenAntwort } from './fragebogenKi.js';
+import { bereinigeFragebogenEingabe, baueFragebogenMessages, parseFragebogenAntwort, bereinigeBildEingabe, baueNotizMessages, parseNotizAntwort } from './fragebogenKi.js';
 import { bereinigeRueckfrageEingabe, baueRueckfrageMessages, parseRueckfrage } from './rueckfrageEntwurf.js';
 import { bereinigeEingabe, baueMessages, parseZusammenfassung } from './risikoZusammenfassung.js';
 
@@ -40,6 +40,7 @@ export function createKiRouter(client, {
   zusammenfassungLimit = createRateLimiter({ max: 20, fensterMs: 60_000 }),
   rueckfrageLimit = createRateLimiter({ max: 20, fensterMs: 60_000 }),
   fragebogenLimit = createRateLimiter({ max: 10, fensterMs: 60_000 }),
+  notizLimit = createRateLimiter({ max: 10, fensterMs: 60_000 }),
 } = {}) {
   const router = Router();
 
@@ -142,6 +143,33 @@ export function createKiRouter(client, {
       if (!auslese) {
         console.error(`[ki] Fragebogen: Modellantwort nicht lesbar (finish_reason=${ergebnis.finishReason}, ${ergebnis.text.length} Zeichen)`);
         return res.status(502).json({ fehler: { art: 'antwortformat', meldung: 'Die Antwort des Modells war nicht auswertbar.' } });
+      }
+      res.json({ ...auslese, modell: ergebnis.modell, erstelltAm: new Date().toISOString() });
+    } catch (e) {
+      sendeFehler(res, e);
+    }
+  });
+
+  // Foto/Notiz (z. B. handschriftliche Adresse): liest Adress- und Kontaktangaben aus einem Bild.
+  router.post('/notiz-lesen', express.json({ limit: '15mb' }), async (req, res) => {
+    const warten = notizLimit();
+    if (warten > 0) {
+      res.setHeader('Retry-After', String(warten));
+      return res.status(429).json({ fehler: { art: 'rate_limit', meldung: 'Zu viele Anfragen — bitte kurz warten.' } });
+    }
+    const eingabe = bereinigeBildEingabe(req.body);
+    if (eingabe?.fehler === 'zu_gross') {
+      return res.status(413).json({ fehler: { art: 'zu_gross', meldung: 'Das Bild ist zu groß (max. 10 MB).' } });
+    }
+    if (!eingabe) {
+      return res.status(400).json({ fehler: { art: 'ungueltige_anfrage', meldung: 'Es wurde kein gültiges Bild (JPG, PNG oder WebP) übergeben.' } });
+    }
+    try {
+      const ergebnis = await client.chat({ messages: baueNotizMessages(eingabe.bildDataUrl), maxTokens: 800, temperature: 0 });
+      const auslese = parseNotizAntwort(ergebnis.text);
+      if (!auslese) {
+        console.error(`[ki] Notiz: nichts Lesbares gefunden (finish_reason=${ergebnis.finishReason}, ${ergebnis.text.length} Zeichen)`);
+        return res.status(422).json({ fehler: { art: 'nichts_gelesen', meldung: 'Auf dem Bild konnte keine Adresse oder Angabe gelesen werden.' } });
       }
       res.json({ ...auslese, modell: ergebnis.modell, erstelltAm: new Date().toISOString() });
     } catch (e) {

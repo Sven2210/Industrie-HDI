@@ -70,7 +70,7 @@ const FragebogenHinweis: React.FC<Props> = ({ data, onChange }) => {
       {uebernahme ? (
         <>
           <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
-            {anzahl} {anzahl === 1 ? 'Feld' : 'Felder'} aus dem Fragebogen „{uebernahme.dokumentName}" übernommen
+            {anzahl} {anzahl === 1 ? 'Feld' : 'Felder'} aus {/\.(jpe?g|png|webp)$/i.test(uebernahme.dokumentName) ? 'dem Foto' : 'dem Fragebogen'} „{uebernahme.dokumentName}" übernommen
             {anzahlKi > 0 && ` — davon ${anzahlKi} per KI gelesen (gelb markiert, bitte prüfen)`}
           </Typography>
           <Typography sx={{ fontSize: '0.78rem' }}>

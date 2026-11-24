@@ -231,3 +231,31 @@ test('POST /fragebogen-lesen: ungültige/zu große Eingabe → 400/413 ohne Hub-
     assert.equal((await res.json()).fehler.art, 'antwortformat');
   });
 });
+
+// ---- Notiz-Auslese (Foto) ----
+
+const BILD_DATEN = `data:image/jpeg;base64,${Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46]).toString('base64')}`;
+const postNotiz = (basis, body) => fetch(`${basis}/notiz-lesen`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+
+test('POST /notiz-lesen: liefert Felder, sendet das Bild als image_url', async () => {
+  let gesendet;
+  const fetchImpl = async (_u, opts) => {
+    gesendet = JSON.parse(opts.body);
+    return modellAntwort(JSON.stringify({ felder: { strasseNr: 'Münsterstraße 145', plzOrt: '45721 Haltern am See' } }));
+  };
+  await mitServer({ AI_HUB_API_KEY: TEST_KEY, AI_HUB_MODEL: 'm' }, fetchImpl, undefined, async (basis) => {
+    const res = await postNotiz(basis, { bild: BILD_DATEN });
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).felder.plzOrt, '45721 Haltern am See');
+    assert.equal(gesendet.messages[1].content[1].image_url.url, BILD_DATEN);
+  });
+});
+
+test('POST /notiz-lesen: ungültiges Bild 400, nichts gelesen 422', async () => {
+  await mitServer({ AI_HUB_API_KEY: TEST_KEY, AI_HUB_MODEL: 'm' }, async () => modellAntwort('{"felder":{}}'), undefined, async (basis) => {
+    assert.equal((await postNotiz(basis, { bild: 'kein bild' })).status, 400);
+    const res = await postNotiz(basis, { bild: BILD_DATEN });
+    assert.equal(res.status, 422);
+    assert.equal((await res.json()).fehler.art, 'nichts_gelesen');
+  });
+});

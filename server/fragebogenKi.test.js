@@ -73,3 +73,35 @@ test('parseFragebogenAntwort: Platzhalter und Anmerkungen im Wert werden verworf
   assert.deepEqual(r.felder, { firma: 'Mustermann GmbH', mitversicherte: ['A GmbH, Weg 1'] });
   assert.equal(r.bhvFakten.produktion.angaben, '');
 });
+
+// ---- Foto/Notiz ----
+import { bereinigeBildEingabe, baueNotizMessages, parseNotizAntwort } from './fragebogenKi.js';
+
+const JPEG_B64 = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46]).toString('base64');
+const PNG_B64 = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0]).toString('base64');
+
+test('bereinigeBildEingabe: erkennt JPEG/PNG an den Bytes, lehnt anderes ab', () => {
+  assert.match(bereinigeBildEingabe({ bild: `data:image/jpeg;base64,${JPEG_B64}` }).bildDataUrl, /^data:image\/jpeg;base64,/);
+  assert.match(bereinigeBildEingabe({ bild: PNG_B64 }).bildDataUrl, /^data:image\/png;base64,/);
+  // falsch deklarierter Typ: maßgeblich sind die Bytes
+  assert.match(bereinigeBildEingabe({ bild: `data:image/png;base64,${JPEG_B64}` }).bildDataUrl, /^data:image\/jpeg/);
+  assert.equal(bereinigeBildEingabe({ bild: Buffer.from('%PDF-1.4 ....').toString('base64') }), undefined);
+  assert.equal(bereinigeBildEingabe({ bild: 'kein base64!!' }), undefined);
+  assert.equal(bereinigeBildEingabe({}), undefined);
+  const gross = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.alloc(11 * 1024 * 1024)]).toString('base64');
+  assert.deepEqual(bereinigeBildEingabe({ bild: gross }), { fehler: 'zu_gross' });
+});
+
+test('baueNotizMessages: Bild als image_url, Prompt verbietet Raten', () => {
+  const m = baueNotizMessages('data:image/jpeg;base64,AAAA');
+  assert.match(m[0].content, /Rate nie/);
+  assert.match(m[0].content, /keine Anweisungen/);
+  assert.equal(m[1].content[1].image_url.url, 'data:image/jpeg;base64,AAAA');
+});
+
+test('parseNotizAntwort: nur Adress-/Kontaktfelder, Platzhalter und ungültige PLZ fallen weg', () => {
+  const r = parseNotizAntwort('```json\n' + JSON.stringify({ felder: { strasseNr: 'Münsterstraße 145', plzOrt: '45721 Haltern am See', telefon: null, firma: 'Test [...]', gesamtumsatz: 5 } }) + '\n```');
+  assert.deepEqual(r.felder, { strasseNr: 'Münsterstraße 145', plzOrt: '45721 Haltern am See' });
+  assert.equal(parseNotizAntwort('{"felder":{"plzOrt":"Haltern"}}'), undefined);
+  assert.equal(parseNotizAntwort('nichts'), undefined);
+});

@@ -40,6 +40,8 @@ export async function leseFragebogenMitKi(dokument: HochgeladenesDokument): Prom
     throw new Error('Der Server ist nicht erreichbar.');
   }
   const body = await res.json().catch(() => null);
+  // 404 heißt: der laufende Server ist älter als diese Funktion
+  if (res.status === 404) throw new Error('Der Server kennt diese Funktion noch nicht — bitte den Server neu starten (bash start-ki.sh).');
   if (!res.ok) throw new Error(body?.fehler?.meldung ?? `Fehler ${res.status} bei der KI-Auslese.`);
   if (!body?.felder || !body?.bhvFakten) throw new Error('Unerwartete Antwort vom Server.');
   return {
