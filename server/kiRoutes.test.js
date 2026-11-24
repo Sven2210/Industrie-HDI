@@ -199,3 +199,35 @@ test('POST /rueckfrage-entwurf: ohne Punkte 400, unlesbare Modellantwort 502', a
     assert.equal((await res.json()).fehler.art, 'antwortformat');
   });
 });
+
+// ---- Fragebogen-Auslese per KI ----
+
+const PDF_DATEN = `data:application/pdf;base64,${Buffer.from('%PDF-1.4\n%x').toString('base64')}`;
+const postFragebogen = (basis, body) => fetch(`${basis}/fragebogen-lesen`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+
+test('POST /fragebogen-lesen: liefert Felder und Fakten, sendet das PDF als file-Teil', async () => {
+  let gesendet;
+  const fetchImpl = async (_u, opts) => {
+    gesendet = JSON.parse(opts.body);
+    return modellAntwort(JSON.stringify({ felder: { firma: 'Mustermann GmbH' }, bhv: { reklamationen: { ausgefuellt: true, angaben: 'keine', eintraege: 'keine' } } }));
+  };
+  await mitServer({ AI_HUB_API_KEY: TEST_KEY, AI_HUB_MODEL: 'm' }, fetchImpl, undefined, async (basis) => {
+    const res = await postFragebogen(basis, { pdf: PDF_DATEN });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.felder.firma, 'Mustermann GmbH');
+    assert.equal(body.bhvFakten.reklamationen.eintraege, 'keine');
+    assert.equal(gesendet.messages[1].content[1].file.file_data, PDF_DATEN);
+  });
+});
+
+test('POST /fragebogen-lesen: ungültige/zu große Eingabe → 400/413 ohne Hub-Aufruf, unlesbare Antwort → 502', async () => {
+  await mitServer({ AI_HUB_API_KEY: TEST_KEY, AI_HUB_MODEL: 'm' }, async () => modellAntwort('Hallo'), undefined, async (basis) => {
+    assert.equal((await postFragebogen(basis, { pdf: 'kein pdf' })).status, 400);
+    const gross = `data:application/pdf;base64,${Buffer.concat([Buffer.from('%PDF-'), Buffer.alloc(11 * 1024 * 1024)]).toString('base64')}`;
+    assert.equal((await postFragebogen(basis, { pdf: gross })).status, 413);
+    const res = await postFragebogen(basis, { pdf: PDF_DATEN });
+    assert.equal(res.status, 502);
+    assert.equal((await res.json()).fehler.art, 'antwortformat');
+  });
+});

@@ -1,11 +1,14 @@
 import type { AntragData, Firmierung, RisikocheckItem } from '../types/antrag';
 import type { FragebogenFelder } from './fragebogenExtraktion';
+import type { KombiAuslese } from './fragebogenKi';
 
 // Überträgt ausgelesene Fragebogen-Angaben in den Antrag. Es werden nur leere Felder gefüllt —
 // bereits Erfasstes wird nie überschrieben. Welche Felder übernommen wurden, wird im Antrag
 // (fragebogenUebernahme) protokolliert, damit sie in der Oberfläche markiert werden können.
 
 export const UEBERNOMMEN_FARBE = '#EAF5EE';
+// Per KI gelesene Felder: gelblich, damit sie sich von sicher erkannten Regel-Werten abheben
+export const KI_FARBE = '#FEF9C3';
 
 const FIRMIERUNGEN: Firmierung[] = ['GbR', 'OHG', 'KG', 'GmbH', 'UG', 'AG', 'Limited', 'SE'];
 
@@ -233,6 +236,39 @@ export function wendeFragebogenAn(
   return neu;
 }
 
+// Wie wendeFragebogenAn, berücksichtigt aber zusätzlich per KI gelesene Felder: erst die Regel-Werte,
+// dann (nur in noch leere Felder) die KI-Werte. Pfade, die erst dadurch gefüllt wurden, werden in
+// `kiPfade` vermerkt und in der Oberfläche gesondert markiert.
+export function wendeKombiniertAn(
+  antrag: AntragData,
+  kombi: KombiAuslese,
+  dokumentName: string,
+  optionen: AnwendenOptionen = {},
+): AntragData {
+  const nurRegel = wendeFragebogenAn(antrag, kombi.regelFelder, dokumentName, optionen);
+  let ergebnis = nurRegel;
+  let kiPfade = [...(antrag.fragebogenUebernahme?.kiPfade ?? [])];
+
+  if (kombi.kiFelder.length > 0) {
+    ergebnis = wendeFragebogenAn(nurRegel, kombi.felder, dokumentName, optionen);
+    const vorher = new Set(Object.keys(nurRegel.fragebogenUebernahme?.werte ?? {}));
+    const neu = Object.keys(ergebnis.fragebogenUebernahme?.werte ?? {}).filter((k) => !vorher.has(k));
+    kiPfade = [...new Set([...kiPfade, ...neu])];
+    for (const pfad of neu) {
+      const m = pfad.match(/^risikocheck\.(.+)$/);
+      const item = m ? ergebnis.risikocheck.find((i) => i.id === m[1]) : undefined;
+      if (item) item.anmerkungen = `${item.anmerkungen} (per KI gelesen, bitte prüfen)`;
+    }
+  }
+
+  if (ergebnis.fragebogenUebernahme) {
+    ergebnis.fragebogenUebernahme.kiPfade = kiPfade.length > 0 ? kiPfade : undefined;
+    ergebnis.fragebogenUebernahme.kiHinweis = kombi.kiHinweis;
+  }
+  if (kombi.kiAuslese) ergebnis.kiAuslese = kombi.kiAuslese;
+  return ergebnis;
+}
+
 // Ein Feld gilt als "aus dem Fragebogen", solange sein Wert noch dem übernommenen entspricht.
 export function istAusFragebogen(antrag: AntragData, pfad: string): boolean {
   const uebernommen = antrag.fragebogenUebernahme?.werte[pfad];
@@ -243,8 +279,9 @@ export function istAusFragebogen(antrag: AntragData, pfad: string): boolean {
 // vorhandenes sx des Felds wird über basisSx mitgegeben, da ein zweites sx es sonst überschriebe.
 export function markierung(antrag: AntragData, pfad: string, basisSx: object = {}): { title?: string; sx: object } {
   if (!istAusFragebogen(antrag, pfad)) return { sx: basisSx };
+  const perKi = antrag.fragebogenUebernahme?.kiPfade?.includes(pfad) === true;
   return {
-    title: 'Aus Fragebogen übernommen',
-    sx: { ...basisSx, '& .MuiOutlinedInput-root': { backgroundColor: UEBERNOMMEN_FARBE } },
+    title: perKi ? 'Per KI aus dem Fragebogen gelesen — bitte prüfen' : 'Aus Fragebogen übernommen',
+    sx: { ...basisSx, '& .MuiOutlinedInput-root': { backgroundColor: perKi ? KI_FARBE : UEBERNOMMEN_FARBE } },
   };
 }

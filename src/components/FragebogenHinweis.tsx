@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Alert, Button, Typography } from '@mui/material';
 import type { AntragData } from '../types/antrag';
-import { leseFragebogenAusDokument } from '../utils/fragebogenEinlesen';
-import { UEBERNOMMEN_FARBE, wendeFragebogenAn } from '../utils/fragebogenUebernahme';
+import { leseFragebogenKombiniert } from '../utils/fragebogenKi';
+import { UEBERNOMMEN_FARBE, wendeKombiniertAn } from '../utils/fragebogenUebernahme';
 
 interface Props {
   data: AntragData;
@@ -20,14 +20,16 @@ const FragebogenHinweis: React.FC<Props> = ({ data, onChange }) => {
   if (!uebernahme && !dokument) return null;
 
   const anzahl = uebernahme ? Object.keys(uebernahme.werte).length : 0;
+  // Nur Pfade zählen, die noch unverändert aus der KI stammen
+  const anzahlKi = uebernahme ? (uebernahme.kiPfade ?? []).filter((p) => p in uebernahme.werte).length : 0;
 
   const handleNeuEinlesen = async () => {
     if (!dokument) return;
     setLaedt(true);
     setRueckmeldung(null);
     try {
-      const felder = await leseFragebogenAusDokument(dokument);
-      const neu = wendeFragebogenAn(data, felder, dokument.dateiname);
+      const kombi = await leseFragebogenKombiniert(dokument, data.kiAuslese);
+      const neu = wendeKombiniertAn(data, kombi, dokument.dateiname);
       const dazu = Object.keys(neu.fragebogenUebernahme?.werte ?? {}).length - anzahl;
       onChange({
         interessent: neu.interessent,
@@ -37,6 +39,7 @@ const FragebogenHinweis: React.FC<Props> = ({ data, onChange }) => {
         risikokalkulation: neu.risikokalkulation,
         unternehmen: neu.unternehmen,
         fragebogenUebernahme: neu.fragebogenUebernahme,
+        kiAuslese: neu.kiAuslese,
       });
       setRueckmeldung(dazu > 0 ? `${dazu} weitere Felder übernommen.` : 'Keine weiteren leeren Felder gefunden.');
     } catch (err) {
@@ -49,12 +52,12 @@ const FragebogenHinweis: React.FC<Props> = ({ data, onChange }) => {
 
   return (
     <Alert
-      severity={uebernahme?.hinweis ? 'warning' : 'info'}
+      severity={uebernahme?.hinweis || uebernahme?.kiHinweis ? 'warning' : 'info'}
       sx={{
         mb: 3,
         alignItems: 'center',
         // Normalfall in der Markierungsfarbe des jeweiligen Brandings, Warnung bleibt gelb
-        ...(uebernahme?.hinweis ? {} : { bgcolor: UEBERNOMMEN_FARBE, color: '#0F172A', '& .MuiAlert-icon': { color: 'primary.main' } }),
+        ...(uebernahme?.hinweis || uebernahme?.kiHinweis ? {} : { bgcolor: UEBERNOMMEN_FARBE, color: '#0F172A', '& .MuiAlert-icon': { color: 'primary.main' } }),
       }}
       action={
         dokument ? (
@@ -68,12 +71,14 @@ const FragebogenHinweis: React.FC<Props> = ({ data, onChange }) => {
         <>
           <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
             {anzahl} {anzahl === 1 ? 'Feld' : 'Felder'} aus dem Fragebogen „{uebernahme.dokumentName}" übernommen
+            {anzahlKi > 0 && ` — davon ${anzahlKi} per KI gelesen (gelb markiert, bitte prüfen)`}
           </Typography>
           <Typography sx={{ fontSize: '0.78rem' }}>
             Übernommene Felder sind hinterlegt, solange sie unverändert sind. Bereits Erfasstes wird nie überschrieben.
             {uebernahme.nichtGefunden.length > 0 && ` Nicht gefunden: ${uebernahme.nichtGefunden.join(', ')}.`}
           </Typography>
           {uebernahme.hinweis && <Typography sx={{ fontSize: '0.78rem' }}>{uebernahme.hinweis}</Typography>}
+          {uebernahme.kiHinweis && <Typography sx={{ fontSize: '0.78rem' }}>{uebernahme.kiHinweis}</Typography>}
         </>
       ) : (
         <Typography sx={{ fontSize: '0.85rem' }}>

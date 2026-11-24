@@ -104,6 +104,8 @@ export interface BhvKategorieErgebnis {
   titel: string;
   stufe: BhvRisikoStufe;
   begruendung: string;
+  // 'ki': Angaben wurden per KI aus dem Dokument gelesen (die Stufe berechnen weiterhin die Regeln)
+  quelle?: 'ki';
 }
 
 export interface BhvAnalyseErgebnis {
@@ -299,6 +301,20 @@ export interface FragebogenUebernahme {
   werte: Record<string, string>;
   nichtGefunden: string[];
   hinweis?: string;
+  // Pfade (Schlüssel aus `werte`), die per KI gelesen wurden und deshalb besonders geprüft werden sollten
+  kiPfade?: string[];
+  // Grund, warum die KI-Auslese nicht möglich war (Regeln wurden trotzdem angewendet)
+  kiHinweis?: string;
+}
+
+// Ergebnis der KI-Auslese eines Fragebogens (siehe /api/ki/fragebogen-lesen), je Dokument gespeichert,
+// damit Vorbefüllung und BHV-Auswertung das Dokument nicht doppelt an den AI Hub senden.
+export interface KiAuslese {
+  dokumentId: string;
+  erstelltAm: string;
+  modell: string;
+  felder: Record<string, unknown>;
+  bhvFakten: Record<string, { ausgefuellt: boolean; angaben: string; [flag: string]: unknown }>;
 }
 
 // KI-Zusammenfassung der Analyseergebnisse (adesso AI Hub). `eingabeStand` identifiziert die Daten,
@@ -331,6 +347,7 @@ export interface AntragData {
   analyse?: AnalyseDaten;
   workflow?: WorkflowEintrag[];
   fragebogenUebernahme?: FragebogenUebernahme;
+  kiAuslese?: KiAuslese;
   risikoZusammenfassung?: RisikoZusammenfassung;
   createdAt: string;
   updatedAt: string;

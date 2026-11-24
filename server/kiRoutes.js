@@ -5,6 +5,7 @@
 
 import express, { Router } from 'express';
 import { AiHubError, httpStatusFuerClient } from './aiHub.js';
+import { bereinigeFragebogenEingabe, baueFragebogenMessages, parseFragebogenAntwort } from './fragebogenKi.js';
 import { bereinigeRueckfrageEingabe, baueRueckfrageMessages, parseRueckfrage } from './rueckfrageEntwurf.js';
 import { bereinigeEingabe, baueMessages, parseZusammenfassung } from './risikoZusammenfassung.js';
 
@@ -38,6 +39,7 @@ export function createKiRouter(client, {
   pingLimit = createRateLimiter({ max: 10, fensterMs: 60_000 }),
   zusammenfassungLimit = createRateLimiter({ max: 20, fensterMs: 60_000 }),
   rueckfrageLimit = createRateLimiter({ max: 20, fensterMs: 60_000 }),
+  fragebogenLimit = createRateLimiter({ max: 10, fensterMs: 60_000 }),
 } = {}) {
   const router = Router();
 
@@ -115,6 +117,33 @@ export function createKiRouter(client, {
         return res.status(502).json({ fehler: { art: 'antwortformat', meldung: 'Die Antwort des Modells war nicht auswertbar. Bitte erneut versuchen.' } });
       }
       res.json({ entwurf, modell: ergebnis.modell });
+    } catch (e) {
+      sendeFehler(res, e);
+    }
+  });
+
+  // KI-Auslese eines Fragebogens (PDF): liefert gelesene Fakten, bewertet nicht (siehe fragebogenKi.js).
+  router.post('/fragebogen-lesen', express.json({ limit: '15mb' }), async (req, res) => {
+    const warten = fragebogenLimit();
+    if (warten > 0) {
+      res.setHeader('Retry-After', String(warten));
+      return res.status(429).json({ fehler: { art: 'rate_limit', meldung: 'Zu viele Anfragen — bitte kurz warten.' } });
+    }
+    const eingabe = bereinigeFragebogenEingabe(req.body);
+    if (eingabe?.fehler === 'zu_gross') {
+      return res.status(413).json({ fehler: { art: 'zu_gross', meldung: 'Das PDF ist für die KI-Auslese zu groß (max. 10 MB).' } });
+    }
+    if (!eingabe) {
+      return res.status(400).json({ fehler: { art: 'ungueltige_anfrage', meldung: 'Es wurde kein gültiges PDF übergeben.' } });
+    }
+    try {
+      const ergebnis = await client.chat({ messages: baueFragebogenMessages(eingabe.pdfDataUrl), maxTokens: 4000, temperature: 0 });
+      const auslese = parseFragebogenAntwort(ergebnis.text);
+      if (!auslese) {
+        console.error(`[ki] Fragebogen: Modellantwort nicht lesbar (finish_reason=${ergebnis.finishReason}, ${ergebnis.text.length} Zeichen)`);
+        return res.status(502).json({ fehler: { art: 'antwortformat', meldung: 'Die Antwort des Modells war nicht auswertbar.' } });
+      }
+      res.json({ ...auslese, modell: ergebnis.modell, erstelltAm: new Date().toISOString() });
     } catch (e) {
       sendeFehler(res, e);
     }

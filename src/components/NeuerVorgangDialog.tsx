@@ -3,8 +3,9 @@ import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogCont
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import type { AntragData } from '../types/antrag';
 import { initialAntragData } from '../types/antrag';
-import { dateiZuDokument, leseFragebogenAusDokument } from '../utils/fragebogenEinlesen';
-import { wendeFragebogenAn } from '../utils/fragebogenUebernahme';
+import { dateiZuDokument } from '../utils/fragebogenEinlesen';
+import { leseFragebogenKombiniert } from '../utils/fragebogenKi';
+import { wendeKombiniertAn } from '../utils/fragebogenUebernahme';
 
 interface Props {
   open: boolean;
@@ -37,10 +38,10 @@ const NeuerVorgangDialog: React.FC<Props> = ({ open, underwriter, onClose, onSta
     setFehler(null);
     try {
       const dokument = await dateiZuDokument(file);
-      const felder = await leseFragebogenAusDokument(dokument);
+      const kombi = await leseFragebogenKombiniert(dokument);
       let antrag = leererAntrag();
       antrag.analyse = { dokumente: [dokument] };
-      antrag = wendeFragebogenAn(antrag, felder, dokument.dateiname, { ersetzeStandardwerte: true });
+      antrag = wendeKombiniertAn(antrag, kombi, dokument.dateiname, { ersetzeStandardwerte: true });
       onStart(antrag);
     } catch (err) {
       console.error('[NeuerVorgangDialog] Fragebogen konnte nicht gelesen werden', err);
@@ -73,7 +74,7 @@ const NeuerVorgangDialog: React.FC<Props> = ({ open, underwriter, onClose, onSta
           {laedt ? (
             <>
               <CircularProgress size={28} />
-              <Typography sx={{ mt: 1.5, fontSize: '0.85rem', color: '#64748B' }}>Fragebogen wird gelesen …</Typography>
+              <Typography sx={{ mt: 1.5, fontSize: '0.85rem', color: '#64748B' }}>Fragebogen wird gelesen … (bei Lücken kann das einige Sekunden dauern)</Typography>
             </>
           ) : (
             <>
@@ -81,11 +82,17 @@ const NeuerVorgangDialog: React.FC<Props> = ({ open, underwriter, onClose, onSta
               <Typography sx={{ mt: 0.5, fontSize: '0.9rem', fontWeight: 600, color: '#0F172A' }}>
                 Fragebogen (PDF) auswählen
               </Typography>
-              <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8' }}>Digital ausgefülltes PDF mit Textebene</Typography>
+              <Typography sx={{ fontSize: '0.75rem', color: '#94A3B8' }}>Digital ausgefülltes PDF oder Scan</Typography>
             </>
           )}
           <input ref={inputRef} type="file" accept=".pdf,application/pdf" hidden onChange={handleDatei} />
         </Box>
+
+        <Typography sx={{ mt: 2, fontSize: '0.74rem', color: '#64748B' }}>
+          Hinweis: Fehlen im PDF Angaben oder ist es ein Scan, wird das Dokument zur Auswertung an den
+          adesso AI Hub gesendet (sofern eingerichtet). So gelesene Felder sind im Antrag gelb markiert
+          und sollten geprüft werden.
+        </Typography>
 
         {fehler && <Alert severity="warning" sx={{ mt: 2 }}>{fehler}</Alert>}
       </DialogContent>

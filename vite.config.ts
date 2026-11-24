@@ -80,6 +80,6 @@ export default defineConfig({
   // KI-Funktionen laufen im Express-Backend (server.js, `npm start`, Port 3000) — im Dev-Modus
   // dorthin weiterleiten. Der AI-Hub-Key bleibt dort in der Umgebungsvariable.
   server: {
-    proxy: { '/api': 'http://localhost:3000' },
+    proxy: { '/api': process.env.KI_BACKEND ?? 'http://localhost:3000' },
   },
 });

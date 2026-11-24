@@ -14,6 +14,8 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { AntragData, BhvRisikoStufe, BhvKategorieErgebnis, ManuelleRisikoUeberschreibung, HochgeladenesDokument, Regelwerk, WeiterleitungsEintrag, VertriebsRueckmeldungEintrag, FreigabeErteiltEintrag, FreigabeAbgelehntEintrag } from '../../types/antrag';
 import type { AppUser } from '../../types/user';
 import { analysiereBhvFragebogen, berechneGesamteinschaetzung } from '../../utils/bhvAnalyse';
+import { bhvBrauchtKi, wendeBhvKiFaktenAn } from '../../utils/bhvKi';
+import { holeKiAuslese, kiVerfuegbar } from '../../utils/fragebogenKi';
 import type { BhvGesamteinschaetzung } from '../../utils/bhvAnalyse';
 import { findeDokumentHinweise } from '../../utils/dokumentHinweise';
 import { pruefeSanktionen } from '../../utils/sanktionsAnalyse';
@@ -126,6 +128,11 @@ function KategorieZeile({ index, kategorie, ueberschreibung, onUeberschreiben }:
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
           {index}. {kategorie.titel}
+          {kategorie.quelle === 'ki' && (
+            <Tooltip title="Angaben per KI aus dem Dokument gelesen — die Stufe berechnen feste Regeln. Bitte prüfen.">
+              <Chip label="KI" size="small" sx={{ ml: 1, height: 18, fontSize: '0.62rem', fontWeight: 700, bgcolor: '#FEF9C3', color: '#854D0E' }} />
+            </Tooltip>
+          )}
         </Typography>
         {!bearbeiten && (
           <Tooltip title="Risikoeinschätzung manuell anpassen">
@@ -797,6 +804,20 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
   // Bündelt alle drei Prüfungen dieses Reiters unter einem Button: BHV-Dokumentenanalyse,
   // Sanktionsprüfung und Standortrisikoanalyse laufen erst bei Klick, nicht mehr automatisch
   // bei Eingabe. Jede Teilprüfung läuft nur, wenn dafür etwas Neues vorliegt.
+  // Regel-Auswertung; bei unsicheren Abschnitten (z. B. Scan, Ja/Nein-Kästchen) liest zusätzlich die KI nach.
+  // Schlägt das fehl, bleibt es bei der Regel-Auswertung.
+  const bhvMitKi = async (dokument: HochgeladenesDokument) => {
+    const regel = await analysiereBhvFragebogen(dokument);
+    if (!bhvBrauchtKi(regel) || !(await kiVerfuegbar())) return { ergebnis: regel, kiAuslese: undefined };
+    try {
+      const kiAuslese = await holeKiAuslese(dokument, data.kiAuslese);
+      return { ergebnis: wendeBhvKiFaktenAn(regel, kiAuslese.bhvFakten), kiAuslese };
+    } catch (e) {
+      console.error('[StepAnalyse] KI-Auslese der BHV-Abschnitte nicht möglich', e);
+      return { ergebnis: regel, kiAuslese: undefined };
+    }
+  };
+
   const handleAnalyseStarten = async () => {
     const aufgaben: Promise<void>[] = [];
 
@@ -805,12 +826,15 @@ const StepAnalyse: React.FC<Props> = ({ data, onChange, onWorkflowChange, curren
       const letztesDokument = dokumente[dokumente.length - 1];
       aufgaben.push(
         Promise.all([
-          analysiereBhvFragebogen(letztesDokument),
+          bhvMitKi(letztesDokument),
           findeDokumentHinweise(dokumente),
           new Promise((resolve) => setTimeout(resolve, 600)),
         ])
-          .then(([bhvErgebnisNeu, hinweiseNeu]) => {
-            onChange({ analyse: { ...analyse, bhvErgebnis: bhvErgebnisNeu, hinweise: hinweiseNeu } });
+          .then(([{ ergebnis: bhvErgebnisNeu, kiAuslese }, hinweiseNeu]) => {
+            onChange({
+              analyse: { ...analyse, bhvErgebnis: bhvErgebnisNeu, hinweise: hinweiseNeu },
+              ...(kiAuslese ? { kiAuslese } : {}),
+            });
           })
           .finally(() => setPruefeLaeuft(false))
       );
